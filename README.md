@@ -6,10 +6,11 @@ no backend, no dependencies, no real data.
 
 ## Live demo
 
-<https://alkami-technology.gitlab.io/MP/partnership-integration-portal-demo/>
+<https://partnership-integration-portal-demo-fc06db.gitlab.io>
 
+The log explorer is at `/logs.html`, or reachable from any **View Logs** button.
 Pages is private to this project, so viewers need GitLab access to
-`alkami-technology/MP`.
+`alkami-technology/MP/mskolnick`.
 
 | Page | File | What it shows |
 |---|---|---|
@@ -48,12 +49,17 @@ Only Zelle carries entries in the Flagged Issues panel.
 
 ## Log explorer
 
-Reached from any **View Logs** button; per-issue buttons deep-link with `?issue=`.
+Per-issue **Logs** buttons deep-link with `?issue=`.
 
 Facet rail across all ten domains a partner request touches (web, mobile, orchestration,
 gateway, identity, webhooks, vault, config, audit, CDN), a stacked severity histogram with
 click-to-filter hours, a query bar understanding `status:401` and `latency>500`,
 expandable JSON events, a cross-domain trace waterfall, and a live-tail toggle.
+
+## Deploying
+
+`.gitlab-ci.yml` copies both HTML files into `public/` on every push to
+`main` — no build step. Edit the files, push, done.
 
 ## Note
 
