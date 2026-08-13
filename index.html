@@ -1,0 +1,1221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Partnership Integration Dashboard — Configuration Portal</title>
+<style>
+:root{
+  --navy:#0d1b2a;
+  --navy-2:#132436;
+  --navy-3:#1b3049;
+  --teal:#00b3ae;
+  --teal-d:#009390;
+  --ink:#101b28;
+  --body:#5a6b7d;
+  --line:#e2e8f0;
+  --bg:#f4f6f9;
+  --card:#ffffff;
+  --green:#12a150;
+  --green-bg:#e7f7ee;
+  --amber:#b7791f;
+  --amber-bg:#fdf3e0;
+  --red:#c8372d;
+  --red-bg:#fdeceb;
+  --blue:#2563eb;
+  --blue-bg:#e8effd;
+  --radius:10px;
+  --shadow:0 1px 2px rgba(16,27,40,.06), 0 4px 14px rgba(16,27,40,.05);
+  --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif;
+  background:var(--bg);color:var(--ink);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased;
+}
+button{font:inherit;cursor:pointer}
+input,select,textarea{font:inherit;color:inherit}
+a{color:var(--teal-d);text-decoration:none}
+
+/* ---------- shell ---------- */
+.app{display:grid;grid-template-columns:264px 1fr;min-height:100vh}
+
+/* ---------- sidebar ---------- */
+.side{background:var(--navy);color:#c9d6e2;display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow:auto}
+.brand{display:flex;align-items:center;gap:10px;padding:18px 18px 14px}
+.brand .mark{width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,var(--teal),#4f7cff);display:grid;place-items:center;color:#fff;font-weight:800;font-size:14px}
+.brand b{color:#fff;font-size:14px;letter-spacing:.2px;display:block}
+.brand span{font-size:11px;color:#7d93aa;letter-spacing:.5px;text-transform:uppercase}
+.fi-picker{margin:6px 14px 14px;background:var(--navy-2);border:1px solid #22384f;border-radius:8px;padding:9px 11px;cursor:pointer}
+.fi-picker .lbl{font-size:10px;text-transform:uppercase;letter-spacing:.6px;color:#7d93aa}
+.fi-picker .val{color:#fff;font-weight:600;display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:13px}
+.nav-h{font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:#66809a;padding:12px 20px 6px}
+.nav a{display:flex;align-items:center;gap:10px;padding:8px 20px;color:#c9d6e2;font-size:13.5px;border-left:3px solid transparent}
+.nav a:hover{background:var(--navy-2);color:#fff}
+.nav a.on{background:var(--navy-3);color:#fff;border-left-color:var(--teal);font-weight:600}
+.nav .dot{width:7px;height:7px;border-radius:50%;margin-left:auto;flex:none}
+.dot.live{background:#3ddc97}.dot.warn{background:#f2b544}.dot.off{background:#5d7086}
+.dot.down{background:#ff5d52;box-shadow:0 0 0 3px rgba(255,93,82,.25);animation:pulse 1.6s ease-in-out infinite}
+.dot.blocked{background:#ff5d52}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 2px rgba(255,93,82,.28)}50%{box-shadow:0 0 0 5px rgba(255,93,82,.06)}}
+.side-foot{margin-top:auto;padding:14px 18px;border-top:1px solid #1e3350;display:flex;align-items:center;gap:10px}
+.avatar{width:30px;height:30px;border-radius:50%;background:#2c4a68;color:#fff;display:grid;place-items:center;font-size:11px;font-weight:700}
+.side-foot .who{font-size:12px;color:#fff;font-weight:600}
+.side-foot .role{font-size:11px;color:#7d93aa}
+
+/* ---------- topbar ---------- */
+.main{display:flex;flex-direction:column;min-width:0}
+.top{background:#fff;border-bottom:1px solid var(--line);padding:0 26px;display:flex;align-items:center;gap:14px;height:58px;position:sticky;top:0;z-index:20}
+.crumb{font-size:12.5px;color:var(--body)}
+.crumb b{color:var(--ink)}
+.spacer{flex:1}
+.env{display:flex;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:3px}
+.env button{border:0;background:transparent;padding:5px 12px;border-radius:6px;font-size:12.5px;color:var(--body);font-weight:600}
+.env button.on{background:#fff;color:var(--ink);box-shadow:var(--shadow)}
+.env button.on.prod{color:var(--red)}
+.icon-btn{border:1px solid var(--line);background:#fff;width:34px;height:34px;border-radius:8px;display:grid;place-items:center;color:var(--body)}
+.icon-btn:hover{border-color:#c3cedb;color:var(--ink)}
+
+/* ---------- page ---------- */
+.page{padding:22px 26px 120px;max-width:1180px;width:100%}
+.phead{display:flex;gap:16px;align-items:flex-start;margin-bottom:18px}
+.plogo{width:52px;height:52px;border-radius:12px;display:grid;place-items:center;color:#fff;font-weight:800;font-size:17px;flex:none;box-shadow:var(--shadow)}
+h1{font-size:22px;margin:0 0 4px;letter-spacing:-.2px}
+.sub{color:var(--body);font-size:13px}
+.phead .acts{margin-left:auto;display:flex;gap:8px;align-items:center}
+
+.pill{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:700;padding:3px 9px;border-radius:999px;letter-spacing:.2px}
+.pill.ok{background:var(--green-bg);color:var(--green)}
+.pill.warn{background:var(--amber-bg);color:var(--amber)}
+.pill.err{background:var(--red-bg);color:var(--red)}
+.pill.info{background:var(--blue-bg);color:var(--blue)}
+.pill.mut{background:#eef2f6;color:#64748b}
+.pill i{width:6px;height:6px;border-radius:50%;background:currentColor;display:block}
+
+.btn{border:1px solid var(--line);background:#fff;color:var(--ink);padding:7px 13px;border-radius:8px;font-size:13px;font-weight:600}
+.btn:hover{border-color:#c3cedb;background:#fbfcfd}
+.btn.primary{background:var(--teal);border-color:var(--teal);color:#fff}
+.btn.primary:hover{background:var(--teal-d);border-color:var(--teal-d)}
+.btn.danger{color:var(--red);border-color:#f0c9c5}
+.btn.danger:hover{background:var(--red-bg)}
+.btn.sm{padding:4px 9px;font-size:12px;border-radius:6px}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+
+/* toggle */
+.sw{position:relative;width:40px;height:22px;flex:none}
+.sw input{opacity:0;width:100%;height:100%;margin:0;cursor:pointer;position:absolute;z-index:2}
+.sw span{position:absolute;inset:0;background:#cbd5e1;border-radius:999px;transition:.16s}
+.sw span:after{content:"";position:absolute;top:2px;left:2px;width:18px;height:18px;background:#fff;border-radius:50%;transition:.16s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.sw input:checked + span{background:var(--teal)}
+.sw input:checked + span:after{transform:translateX(18px)}
+
+/* tabs */
+.tabs{display:flex;gap:2px;border-bottom:1px solid var(--line);margin-bottom:20px;overflow-x:auto}
+.tabs button{border:0;background:transparent;padding:10px 14px;font-size:13.5px;color:var(--body);font-weight:600;border-bottom:2px solid transparent;white-space:nowrap}
+.tabs button:hover{color:var(--ink)}
+.tabs button.on{color:var(--teal-d);border-bottom-color:var(--teal)}
+.tabs .count{background:#eef2f6;color:#64748b;font-size:11px;padding:1px 6px;border-radius:999px;margin-left:6px}
+
+/* cards */
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);margin-bottom:18px;overflow:hidden}
+.card > header{padding:14px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+.card > header h2{font-size:14.5px;margin:0}
+.card > header p{margin:2px 0 0;font-size:12.5px;color:var(--body)}
+.card > header .acts{margin-left:auto;display:flex;gap:8px;align-items:center}
+.card .body{padding:18px}
+.card .body.tight{padding:0}
+
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px 22px}
+.grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:16px}
+
+.field label{display:block;font-size:12px;font-weight:700;color:#3b4b5e;margin-bottom:5px}
+.field .hint{font-size:11.5px;color:#8494a6;margin-top:5px}
+.inp{width:100%;padding:8px 11px;border:1px solid #d7dfe8;border-radius:8px;background:#fff;outline:0}
+.inp:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(0,179,174,.14)}
+.inp[readonly]{background:#f7f9fb;color:#64748b}
+.inp.mono{font-family:var(--mono);font-size:12.5px}
+.inline{display:flex;gap:8px}
+.inline .inp{flex:1}
+
+/* stats */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:18px}
+.stat{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;box-shadow:var(--shadow)}
+.stat .k{font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:#8494a6;font-weight:700}
+.stat .v{font-size:22px;font-weight:700;margin-top:3px;letter-spacing:-.4px}
+.stat .d{font-size:11.5px;color:var(--body);margin-top:2px}
+
+/* tables */
+table{width:100%;border-collapse:collapse}
+th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:#8494a6;padding:10px 18px;background:#fafbfc;border-bottom:1px solid var(--line);font-weight:700}
+td{padding:11px 18px;border-bottom:1px solid #eef2f6;vertical-align:middle}
+tbody tr:last-child td{border-bottom:0}
+tbody tr:hover{background:#fbfcfd}
+.key{font-family:var(--mono);font-size:12.5px;color:var(--ink);font-weight:600}
+.val-in{width:100%;border:1px solid transparent;background:transparent;padding:5px 8px;border-radius:6px;font-family:var(--mono);font-size:12.5px}
+.val-in:hover{border-color:#dfe6ee;background:#fff}
+.val-in:focus{border-color:var(--teal);background:#fff;outline:0;box-shadow:0 0 0 3px rgba(0,179,174,.14)}
+.scope{font-size:11px;font-weight:700;color:#64748b;background:#eef2f6;padding:2px 7px;border-radius:5px}
+.overridden{box-shadow:inset 3px 0 0 var(--amber)}
+
+/* secret row */
+.secret{display:flex;align-items:center;gap:8px}
+.secret code{font-family:var(--mono);font-size:12.5px;background:#f4f7fa;border:1px solid var(--line);padding:5px 9px;border-radius:6px;letter-spacing:.5px}
+
+/* connectivity test */
+.testlog{background:#0e1b28;color:#c7d6e5;border-radius:8px;padding:14px 16px;font-family:var(--mono);font-size:12px;line-height:1.85;min-height:132px;white-space:pre-wrap}
+.testlog .ok{color:#4ade80}.testlog .bad{color:#f87171}.testlog .dim{color:#64809c}.testlog .warn{color:#fbbf24}
+
+/* endpoints */
+.ep{display:flex;align-items:center;gap:12px;padding:11px 18px;border-bottom:1px solid #eef2f6}
+.ep:last-child{border-bottom:0}
+.ep .m{font-family:var(--mono);font-size:10.5px;font-weight:700;padding:2px 6px;border-radius:4px;background:var(--blue-bg);color:var(--blue);width:52px;text-align:center;flex:none}
+.ep .m.post{background:#e7f7ee;color:var(--green)}
+.ep .u{font-family:var(--mono);font-size:12.5px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ep .t{font-size:12px;color:var(--body);font-variant-numeric:tabular-nums}
+
+/* audit */
+.audit{list-style:none;margin:0;padding:0}
+.audit li{display:flex;gap:12px;padding:12px 18px;border-bottom:1px solid #eef2f6;font-size:13px}
+.audit li:last-child{border-bottom:0}
+.audit .when{color:#8494a6;font-size:12px;width:132px;flex:none;font-variant-numeric:tabular-nums}
+.audit .who{font-weight:600}
+.audit code{font-family:var(--mono);font-size:12px;background:#f4f7fa;padding:1px 5px;border-radius:4px}
+
+/* banner */
+.banner{display:flex;gap:11px;align-items:flex-start;padding:12px 15px;border-radius:9px;font-size:13px;margin-bottom:18px}
+.banner.warn{background:var(--amber-bg);border:1px solid #f2ddb4;color:#8a5a12}
+.banner.info{background:var(--blue-bg);border:1px solid #cfdefb;color:#1d4ed8}
+.banner b{display:block;margin-bottom:1px}
+
+/* flagged issues */
+.issue{display:flex;gap:12px;padding:13px 18px;border-bottom:1px solid #eef2f6;align-items:flex-start}
+.issue:last-child{border-bottom:0}
+.issue.crit{box-shadow:inset 3px 0 0 var(--red)}
+.issue.warn{box-shadow:inset 3px 0 0 var(--amber)}
+.issue.info{box-shadow:inset 3px 0 0 var(--blue)}
+.issue .sev{width:22px;height:22px;border-radius:6px;display:grid;place-items:center;font-size:12px;font-weight:800;color:#fff;flex:none;margin-top:1px}
+.issue.crit .sev{background:var(--red)}
+.issue.warn .sev{background:var(--amber)}
+.issue.info .sev{background:var(--blue)}
+.issue .ttl{font-weight:600;font-size:13.5px}
+.issue .det{font-size:12.5px;color:var(--body);margin-top:2px}
+.issue .meta{font-size:11.5px;color:#8494a6;margin-top:6px;display:flex;gap:14px;flex-wrap:wrap;align-items:center}
+.issue .meta code{font-family:var(--mono);font-size:11px;background:#f4f7fa;border:1px solid var(--line);padding:1px 5px;border-radius:4px;color:#475569}
+.issue .acts{margin-left:auto;display:flex;gap:6px;flex:none;padding-left:10px}
+.allclear{display:flex;gap:11px;align-items:center;padding:20px 18px;color:var(--body);font-size:13px}
+.allclear .tick{width:26px;height:26px;border-radius:50%;background:var(--green);color:#fff;display:grid;place-items:center;font-weight:800;flex:none}
+.card.flags{border-color:#f4cdc8}
+.card.flags > header{background:linear-gradient(90deg,#fdf1f0,#fff)}
+.card.flags.clean{border-color:var(--line)}
+.card.flags.clean > header{background:linear-gradient(90deg,var(--green-bg),#fff)}
+.card.flags.degraded{border-color:#f2ddb4}
+.card.flags.degraded > header{background:linear-gradient(90deg,var(--amber-bg),#fff)}
+
+/* save bar */
+.savebar{position:fixed;left:264px;right:0;bottom:0;background:#fff;border-top:1px solid var(--line);padding:12px 26px;display:flex;align-items:center;gap:14px;box-shadow:0 -6px 20px rgba(16,27,40,.07);transform:translateY(110%);transition:transform .2s ease;z-index:30}
+.savebar.show{transform:none}
+.savebar .msg{font-size:13px;color:var(--body)}
+.savebar .msg b{color:var(--ink)}
+.savebar .right{margin-left:auto;display:flex;gap:9px}
+
+/* toast */
+.toast{position:fixed;bottom:88px;right:26px;background:var(--ink);color:#fff;padding:11px 16px;border-radius:9px;font-size:13px;box-shadow:0 8px 28px rgba(16,27,40,.28);opacity:0;transform:translateY(8px);transition:.2s;z-index:50;pointer-events:none}
+.toast.show{opacity:1;transform:none}
+
+.hide{display:none !important}
+@media(max-width:900px){
+  .app{grid-template-columns:1fr}
+  .side{position:static;height:auto;flex-direction:row;flex-wrap:wrap;align-items:center}
+  .nav{display:flex;flex-wrap:wrap}.nav-h{display:none}.side-foot{display:none}
+  .savebar{left:0}
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ============ SIDEBAR ============ -->
+  <aside class="side">
+    <div class="brand">
+      <div class="mark">A</div>
+      <div><b>Partner Hub</b><span>Integration Portal</span></div>
+    </div>
+
+    <div class="fi-picker" onclick="toast('Financial institution switcher (demo)')">
+      <div class="lbl">Financial Institution</div>
+      <div class="val">Summit Ridge CU <span>⌄</span></div>
+    </div>
+
+    <div class="nav-h">Integrations</div>
+    <nav class="nav" id="nav"></nav>
+
+    <div class="nav-h">Administration</div>
+    <nav class="nav">
+      <a href="#" onclick="toast('Demo only');return false">Partner Catalog</a>
+      <a href="#" onclick="toast('Demo only');return false">Secrets Vault</a>
+      <a href="#" onclick="toast('Demo only');return false">Deployment Queue <span class="pill info" style="margin-left:auto">2</span></a>
+      <a href="#" onclick="toast('Demo only');return false">Audit &amp; Compliance</a>
+    </nav>
+
+    <div class="side-foot">
+      <div class="avatar">MS</div>
+      <div><div class="who">M. Skolnick</div><div class="role">Integration Admin</div></div>
+    </div>
+  </aside>
+
+  <!-- ============ MAIN ============ -->
+  <div class="main">
+    <header class="top">
+      <div class="crumb">Integrations / <b id="crumb">Glia</b></div>
+      <div class="spacer"></div>
+      <div class="env" id="env">
+        <button class="on" data-env="sandbox">Sandbox</button>
+        <button data-env="uat">UAT</button>
+        <button data-env="prod" class="prod">Production</button>
+      </div>
+      <button class="icon-btn" title="Documentation" onclick="toast('Opens partner integration guide')">?</button>
+      <button class="icon-btn" title="Notifications" onclick="toast('3 unread deployment notices')">🔔</button>
+    </header>
+
+    <div class="page">
+      <!-- partner header -->
+      <div class="phead">
+        <div class="plogo" id="plogo">G</div>
+        <div>
+          <h1 id="pname">Glia</h1>
+          <div class="sub" id="pdesc"></div>
+          <div style="margin-top:8px;display:flex;gap:7px;flex-wrap:wrap" id="ppills"></div>
+        </div>
+        <div class="acts">
+          <button class="btn" onclick="openLogs()">View Logs</button>
+          <button class="btn" onclick="testConnection()">Test Connection</button>
+          <button class="btn primary" onclick="openDeploy()">Promote to UAT</button>
+          <label class="sw" title="Enable integration"><input type="checkbox" id="enableToggle" checked onchange="onEnable(this)"><span></span></label>
+        </div>
+      </div>
+
+      <div class="banner warn" id="envBanner">
+        <span>⚠️</span>
+        <div><b>Sandbox environment</b>Changes here do not affect live members. Promote to UAT after validation; production changes require a change ticket and dual approval.</div>
+      </div>
+
+      <!-- ---------- FLAGGED ISSUES ---------- -->
+      <div class="card flags" id="flagsCard">
+        <header>
+          <div>
+            <h2>Flagged Issues</h2>
+            <p id="flagsSub">Conditions detected by the integration health monitor that may break this feature</p>
+          </div>
+          <div class="acts" id="flagsPills"></div>
+        </header>
+        <div class="body tight" id="flagsBody"></div>
+        <div style="padding:9px 18px;border-top:1px solid var(--line);background:#fafbfc;display:flex;align-items:center;gap:12px">
+          <span style="font-size:11.5px;color:#8494a6" id="flagsFoot">Last health check: 6 minutes ago · monitors run every 5 minutes</span>
+          <div style="margin-left:auto;display:flex;gap:7px">
+            <button class="btn sm" onclick="toast('Muting rules opens the alert policy editor')">Alert Rules</button>
+            <button class="btn sm" onclick="openLogs()">View Logs</button>
+            <button class="btn sm" onclick="runHealthCheck(this)">Re-run Health Check</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="tabs" id="tabs">
+        <button class="on" data-tab="overview">Overview</button>
+        <button data-tab="vars">Configuration Variables <span class="count" id="varCount">0</span></button>
+        <button data-tab="conn">Connectivity</button>
+        <button data-tab="creds">Admin Credentials</button>
+        <button data-tab="keys">API Keys <span class="count" id="keyCount">0</span></button>
+        <button data-tab="ent">Entitlements</button>
+        <button data-tab="hooks">Webhooks</button>
+        <button data-tab="audit">Audit Log</button>
+      </div>
+
+      <!-- ---------- OVERVIEW ---------- -->
+      <section class="tabpane" id="pane-overview">
+        <div class="stats" id="stats"></div>
+        <div class="grid2">
+          <div class="card">
+            <header><div><h2>Integration Summary</h2><p>Read-only metadata from the partner catalog</p></div></header>
+            <div class="body">
+              <div class="grid2" id="summary" style="gap:14px 22px"></div>
+            </div>
+          </div>
+          <div class="card">
+            <header><div><h2>Configuration Readiness</h2><p>Required items before promotion</p></div></header>
+            <div class="body" style="padding:6px 0" id="readiness"></div>
+          </div>
+        </div>
+        <div class="card">
+          <header><div><h2>Recent Endpoint Activity</h2><p>Last 24 hours, sandbox</p></div>
+            <div class="acts"><button class="btn sm" onclick="openLogs()">View logs</button></div>
+          </header>
+          <div class="body tight" id="endpoints"></div>
+        </div>
+      </section>
+
+      <!-- ---------- CONFIGURATION VARIABLES ---------- -->
+      <section class="tabpane hide" id="pane-vars">
+        <div class="banner info">
+          <span>ℹ️</span>
+          <div><b>Scope resolution order</b>Global default → Partner default → FI override → Environment override. Rows with an amber bar are overridden at this FI.</div>
+        </div>
+        <div class="card">
+          <header>
+            <div><h2>Configuration Variables</h2><p id="varsSub"></p></div>
+            <div class="acts">
+              <input class="inp" style="width:190px" placeholder="Filter keys…" oninput="filterVars(this.value)">
+              <button class="btn sm" onclick="toast('Exported vars.json')">Export</button>
+              <button class="btn sm primary" onclick="addVar()">+ Add Variable</button>
+            </div>
+          </header>
+          <div class="body tight">
+            <table>
+              <thead><tr>
+                <th style="width:28%">Key</th><th style="width:30%">Value</th><th style="width:12%">Type</th>
+                <th style="width:14%">Scope</th><th style="width:16%">Last Modified</th>
+              </tr></thead>
+              <tbody id="varRows"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ---------- CONNECTIVITY ---------- -->
+      <section class="tabpane hide" id="pane-conn">
+        <div class="card">
+          <header><div><h2>Endpoint &amp; Transport</h2><p>Where the platform reaches the partner service</p></div>
+            <div class="acts"><span class="pill ok" id="connPill"><i></i> Reachable</span></div>
+          </header>
+          <div class="body">
+            <div class="grid2">
+              <div class="field"><label>Base URL</label>
+                <input class="inp mono" id="baseUrl" onchange="dirty()">
+                <div class="hint">Partner-issued host for the selected environment.</div>
+              </div>
+              <div class="field"><label>Auth Endpoint</label>
+                <input class="inp mono" id="authUrl" onchange="dirty()">
+                <div class="hint">OAuth 2.0 token exchange path.</div>
+              </div>
+              <div class="field"><label>Tenant / Site ID</label>
+                <input class="inp mono" id="tenantId" onchange="dirty()">
+              </div>
+              <div class="field"><label>Auth Method</label>
+                <select class="inp" onchange="dirty()">
+                  <option>OAuth 2.0 — Client Credentials</option>
+                  <option>OAuth 2.0 — Authorization Code + PKCE</option>
+                  <option>Mutual TLS (mTLS)</option>
+                  <option>API Key (header)</option>
+                  <option>SAML 2.0 Assertion</option>
+                </select>
+              </div>
+            </div>
+            <div class="grid3" style="margin-top:18px">
+              <div class="field"><label>Connect Timeout (ms)</label><input class="inp" type="number" value="5000" onchange="dirty()"></div>
+              <div class="field"><label>Read Timeout (ms)</label><input class="inp" type="number" value="15000" onchange="dirty()"></div>
+              <div class="field"><label>Retry Policy</label>
+                <select class="inp" onchange="dirty()"><option>3 attempts, exponential backoff</option><option>2 attempts, fixed 500ms</option><option>No retry</option></select>
+              </div>
+              <div class="field"><label>Circuit Breaker</label>
+                <select class="inp" onchange="dirty()"><option>Open after 5 failures / 30s</option><option>Open after 10 failures / 60s</option><option>Disabled</option></select>
+              </div>
+              <div class="field"><label>TLS Version</label>
+                <select class="inp" onchange="dirty()"><option>TLS 1.3 (minimum)</option><option>TLS 1.2 (minimum)</option></select>
+              </div>
+              <div class="field"><label>Certificate Pinning</label>
+                <select class="inp" onchange="dirty()"><option>Enabled — SHA-256 pin set</option><option>Disabled</option></select>
+              </div>
+            </div>
+            <div class="field" style="margin-top:18px">
+              <label>Outbound IP Allowlist <span class="scope" style="margin-left:6px">provided to partner</span></label>
+              <textarea class="inp mono" rows="3" onchange="dirty()">52.14.208.0/24
+52.14.209.0/24
+3.221.44.17/32</textarea>
+              <div class="hint">These NAT ranges must be allowlisted on the partner side before UAT promotion.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <header><div><h2>Connection Diagnostics</h2><p>Runs DNS, TLS, auth handshake, and a sample call</p></div>
+            <div class="acts"><button class="btn primary sm" onclick="testConnection()">Run Test</button></div>
+          </header>
+          <div class="body"><div class="testlog" id="testlog"><span class="dim">Idle — click “Run Test” to validate this configuration against the partner sandbox.</span></div></div>
+        </div>
+      </section>
+
+      <!-- ---------- ADMIN CREDENTIALS ---------- -->
+      <section class="tabpane hide" id="pane-creds">
+        <div class="banner warn">
+          <span>🔒</span>
+          <div><b>Secrets are write-only</b>Stored values are encrypted in the platform vault and never returned to this UI. Entering a new value replaces the existing secret on save.</div>
+        </div>
+        <div class="card">
+          <header><div><h2>Partner Admin Credentials</h2><p>Service account used by the platform to administer the partner tenant</p></div>
+            <div class="acts"><span class="pill ok"><i></i> Vault: alkami/partners/<span id="vaultSlug">glia</span></span></div>
+          </header>
+          <div class="body">
+            <div class="grid2">
+              <div class="field"><label>Admin Username</label><input class="inp mono" id="admUser" onchange="dirty()"></div>
+              <div class="field"><label>Admin Password</label>
+                <div class="inline">
+                  <input class="inp mono" id="admPass" type="password" value="••••••••••••••••" onchange="dirty()">
+                  <button class="btn" onclick="toggleSecret('admPass',this)">Reveal</button>
+                </div>
+                <div class="hint">Last rotated 41 days ago · policy: 90 days</div>
+              </div>
+              <div class="field"><label>Client ID</label>
+                <div class="inline"><input class="inp mono" id="clientId" readonly>
+                <button class="btn" onclick="copyOf('clientId')">Copy</button></div>
+              </div>
+              <div class="field"><label>Client Secret</label>
+                <div class="inline">
+                  <input class="inp mono" type="password" value="••••••••••••••••••••••••" onchange="dirty()">
+                  <button class="btn" onclick="rotate('Client secret')">Rotate</button>
+                </div>
+                <div class="hint">Rotation triggers a coordinated cutover window with the partner.</div>
+              </div>
+              <div class="field"><label>Support Contact Account</label><input class="inp" value="integrations@summitridgecu.org" onchange="dirty()"></div>
+              <div class="field"><label>SSO / SAML Metadata URL</label><input class="inp mono" value="https://sso.summitridgecu.org/saml/metadata.xml" onchange="dirty()"></div>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <header><div><h2>Credential Rotation Schedule</h2><p>Automated rotation windows and owners</p></div></header>
+          <div class="body tight">
+            <table>
+              <thead><tr><th>Credential</th><th>Owner</th><th>Last Rotated</th><th>Next Due</th><th>Status</th></tr></thead>
+              <tbody>
+                <tr><td class="key">admin_password</td><td>Platform Ops</td><td>2026-07-03</td><td>2026-10-01</td><td><span class="pill ok"><i></i> Healthy</span></td></tr>
+                <tr><td class="key">client_secret</td><td>Partner Eng</td><td>2026-05-19</td><td>2026-08-17</td><td><span class="pill warn"><i></i> Due in 4 days</span></td></tr>
+                <tr><td class="key">signing_cert</td><td>Security</td><td>2025-11-02</td><td>2026-11-02</td><td><span class="pill ok"><i></i> Healthy</span></td></tr>
+                <tr><td class="key">webhook_hmac</td><td>Platform Ops</td><td>2026-02-11</td><td>2026-08-11</td><td><span class="pill err"><i></i> Overdue</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ---------- API KEYS ---------- -->
+      <section class="tabpane hide" id="pane-keys">
+        <div class="card">
+          <header><div><h2>API Keys</h2><p>Keys issued to this partner integration for the selected environment</p></div>
+            <div class="acts"><button class="btn sm primary" onclick="issueKey()">+ Issue Key</button></div>
+          </header>
+          <div class="body tight">
+            <table>
+              <thead><tr><th style="width:22%">Label</th><th style="width:26%">Key</th><th>Scopes</th><th style="width:13%">Expires</th><th style="width:13%">Status</th><th style="width:9%"></th></tr></thead>
+              <tbody id="keyRows"></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="card">
+          <header><div><h2>Key Policy</h2><p>Applies to all keys issued under this integration</p></div></header>
+          <div class="body">
+            <div class="grid3">
+              <div class="field"><label>Max Key Lifetime</label><select class="inp" onchange="dirty()"><option>365 days</option><option>180 days</option><option>90 days</option></select></div>
+              <div class="field"><label>Rate Limit</label><select class="inp" onchange="dirty()"><option>600 req/min</option><option>1,200 req/min</option><option>Unlimited (internal)</option></select></div>
+              <div class="field"><label>Burst Allowance</label><input class="inp" value="150 req/s" onchange="dirty()"></div>
+              <div class="field"><label>IP Binding</label><select class="inp" onchange="dirty()"><option>Required</option><option>Optional</option></select></div>
+              <div class="field"><label>Auto-expire Unused Keys</label><select class="inp" onchange="dirty()"><option>After 30 days idle</option><option>After 90 days idle</option><option>Never</option></select></div>
+              <div class="field"><label>Notify Before Expiry</label><input class="inp" value="14 days" onchange="dirty()"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ---------- ENTITLEMENTS ---------- -->
+      <section class="tabpane hide" id="pane-ent">
+        <div class="card">
+          <header><div><h2>Feature Entitlements</h2><p>Which partner capabilities are exposed to members and staff</p></div></header>
+          <div class="body tight" id="entRows"></div>
+        </div>
+        <div class="card">
+          <header><div><h2>Audience Targeting</h2><p>Controls who sees this integration in digital banking</p></div></header>
+          <div class="body">
+            <div class="grid2">
+              <div class="field"><label>Rollout Strategy</label><select class="inp" onchange="dirty()"><option>Percentage rollout</option><option>Segment list</option><option>All members</option><option>Internal staff only</option></select></div>
+              <div class="field"><label>Rollout Percentage</label><input class="inp" type="range" min="0" max="100" value="25" oninput="document.getElementById('pctOut').textContent=this.value+'%'" onchange="dirty()"><div class="hint">Currently <b id="pctOut">25%</b> of eligible members</div></div>
+              <div class="field"><label>Eligible Segments</label><select class="inp" onchange="dirty()"><option>Retail + Small Business</option><option>Retail only</option><option>Business only</option></select></div>
+              <div class="field"><label>Channels</label><select class="inp" onchange="dirty()"><option>Web + iOS + Android</option><option>Web only</option><option>Mobile only</option></select></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ---------- WEBHOOKS ---------- -->
+      <section class="tabpane hide" id="pane-hooks">
+        <div class="card">
+          <header><div><h2>Inbound Webhooks</h2><p>Partner → platform event callbacks</p></div>
+            <div class="acts"><button class="btn sm" onclick="toast('Sent test event')">Send Test Event</button><button class="btn sm primary" onclick="toast('New subscription form')">+ Subscription</button></div>
+          </header>
+          <div class="body">
+            <div class="field" style="margin-bottom:16px">
+              <label>Callback URL (give this to the partner)</label>
+              <div class="inline">
+                <input class="inp mono" id="cbUrl" readonly>
+                <button class="btn" onclick="copyOf('cbUrl')">Copy</button>
+              </div>
+            </div>
+            <div class="field" style="margin-bottom:16px">
+              <label>Signing Secret (HMAC-SHA256)</label>
+              <div class="inline">
+                <input class="inp mono" type="password" value="whsec_••••••••••••••••••••" readonly>
+                <button class="btn danger" onclick="rotate('Webhook signing secret')">Rotate</button>
+              </div>
+            </div>
+          </div>
+          <div class="body tight" style="border-top:1px solid var(--line)">
+            <table>
+              <thead><tr><th style="width:34%">Event</th><th>Description</th><th style="width:12%">24h Volume</th><th style="width:11%">Enabled</th></tr></thead>
+              <tbody id="hookRows"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ---------- AUDIT ---------- -->
+      <section class="tabpane hide" id="pane-audit">
+        <div class="card">
+          <header><div><h2>Configuration Audit Log</h2><p>Every change is immutable and retained for 7 years</p></div>
+            <div class="acts">
+              <select class="inp" style="width:auto" onchange="toast('Filtered: '+this.value)"><option>All environments</option><option>Sandbox</option><option>UAT</option><option>Production</option></select>
+              <button class="btn sm" onclick="toast('Exported audit.csv')">Export CSV</button>
+            </div>
+          </header>
+          <ul class="audit" id="auditRows"></ul>
+        </div>
+      </section>
+    </div>
+  </div>
+</div>
+
+<div class="savebar" id="savebar">
+  <span class="pill warn"><i></i> Unsaved</span>
+  <div class="msg"><b id="dirtyCount">1</b> pending change to <b id="dirtyPartner">Glia</b> · Sandbox</div>
+  <div class="right">
+    <button class="btn" onclick="discard()">Discard</button>
+    <button class="btn" onclick="toast('Validation passed — 0 errors, 1 warning')">Validate</button>
+    <button class="btn primary" onclick="save()">Save Configuration</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============================================================
+   Demo data — two flagship partners plus a few catalog entries
+   ============================================================ */
+const PARTNERS = {
+  glia: {
+    name:"Glia", initial:"G", color:"linear-gradient(135deg,#6d3bf5,#a06bff)", status:"live",
+    desc:"Digital customer service — chat, cobrowse, and voice inside digital banking",
+    category:"Member Engagement", version:"v4.2.1", certified:"Alkami Certified",
+    contract:"MSA-2024-0117", owner:"Digital Experience", sla:"99.95% / P1 15 min",
+    vaultSlug:"glia",
+    conn:{base:"https://api.sandbox.glia.com/v1", auth:"https://api.sandbox.glia.com/operator_authentication/tokens", tenant:"site_8fa21c04", user:"svc_alkami_admin@summitridgecu.org", client:"gl_cid_7c41d2ba9e"},
+    stats:[["Uptime (30d)","99.97%","+0.02 vs prior"],["Sessions (24h)","1,284","cobrowse + chat"],["Avg Latency","212 ms","p95 480 ms"],["Errors (24h)","6","0.47% of calls"]],
+    vars:[
+      ["glia.site_id","site_8fa21c04","String","FI Override","Aug 11, 2026 · M. Skolnick",true],
+      ["glia.queue_id","q_member_support","String","FI Override","Aug 09, 2026 · J. Rivera",true],
+      ["glia.enable_cobrowse","true","Boolean","Partner Default","Jul 22, 2026 · system",false],
+      ["glia.enable_video","true","Boolean","FI Override","Aug 11, 2026 · M. Skolnick",true],
+      ["glia.enable_audio","true","Boolean","Partner Default","Jul 22, 2026 · system",false],
+      ["glia.widget_position","bottom-right","Enum","Partner Default","Jun 30, 2026 · system",false],
+      ["glia.theme_primary_hex","#0F5A8C","Color","FI Override","Aug 02, 2026 · A. Chen",true],
+      ["glia.business_hours_tz","America/Chicago","String","FI Override","Jul 15, 2026 · A. Chen",true],
+      ["glia.offline_message","Support is available 7am–7pm CT.","Text","FI Override","Jul 15, 2026 · A. Chen",true],
+      ["glia.sso_jwt_issuer","https://sso.summitridgecu.org","URL","FI Override","Jun 04, 2026 · Platform Ops",true],
+      ["glia.mask_pan_in_cobrowse","true","Boolean","Global Default","Locked by policy",false],
+      ["glia.session_timeout_sec","1800","Integer","Partner Default","Jun 30, 2026 · system",false],
+      ["glia.max_concurrent_sessions","50","Integer","FI Override","Aug 01, 2026 · J. Rivera",true],
+      ["glia.transcript_retention_days","90","Integer","Global Default","Locked by policy",false]
+    ],
+    keys:[
+      ["Production Read","gl_live_a1b2••••••••9f3c","sessions:read, operators:read","2027-03-14","active"],
+      ["Sandbox Full","gl_test_77de••••••••41aa","sessions:*, cobrowse:*, webhooks:*","2026-12-01","active"],
+      ["Legacy Widget","gl_live_0c9a••••••••b721","sessions:read","2026-08-20","expiring"],
+      ["Decommissioned v3","gl_live_5511••••••••ee02","—","2026-04-01","revoked"]
+    ],
+    ent:[
+      ["Live Chat","Text chat between members and operators",true],
+      ["Cobrowse","Screen sharing with PII masking",true],
+      ["Video Banking","Two-way video sessions",true],
+      ["Audio Calls","VoIP escalation from chat",true],
+      ["AI Virtual Assistant","Deflection bot before human handoff",false],
+      ["Digital Queue Callback","Hold-your-place callback requests",false]
+    ],
+    hooks:[
+      ["session.started","Fired when a member opens an engagement","842",true],
+      ["session.ended","Includes duration and disposition","839",true],
+      ["operator.assigned","Routing outcome per session","811",true],
+      ["transcript.available","Transcript ready for archival","839",true],
+      ["cobrowse.consent.declined","Member declined screen share","27",false]
+    ],
+    eps:[["GET","/v1/sites/{site_id}/queues","1,204 calls · 98 ms"],["POST","/v1/engagements","842 calls · 240 ms"],["GET","/v1/engagements/{id}/transcript","839 calls · 310 ms"],["POST","/v1/operator_authentication/tokens","96 calls · 180 ms"]],
+    issues:[],
+    cb:"https://webhooks.alkami.com/partners/glia/summitridgecu/v1"
+  },
+
+  popio: {
+    name:"Pop.io", initial:"P", color:"linear-gradient(135deg,#ff6a3d,#ff9d4d)", status:"warn",
+    desc:"Video banking and remote appointment platform for branch-equivalent service",
+    category:"Video Banking", version:"v3.8.0", certified:"Alkami Certified",
+    contract:"MSA-2023-0442", owner:"Branch Transformation", sla:"99.9% / P1 30 min",
+    vaultSlug:"popio",
+    conn:{base:"https://sandbox-api.pop.io/api/v3", auth:"https://sandbox-api.pop.io/oauth2/token", tenant:"org_srcu_2291", user:"alkami.admin@summitridgecu.org", client:"pi_cid_31f9ac70de"},
+    stats:[["Uptime (30d)","99.81%","−0.09 vs prior"],["Appointments (24h)","187","62 walk-in"],["Avg Wait","3 m 41 s","target < 4 m"],["Errors (24h)","31","1.9% of calls"]],
+    vars:[
+      ["popio.org_id","org_srcu_2291","String","FI Override","Aug 12, 2026 · M. Skolnick",true],
+      ["popio.default_branch_group","virtual-branch-01","String","FI Override","Aug 12, 2026 · M. Skolnick",true],
+      ["popio.enable_appointments","true","Boolean","Partner Default","Jul 08, 2026 · system",false],
+      ["popio.enable_walkin_queue","true","Boolean","FI Override","Aug 05, 2026 · D. Patel",true],
+      ["popio.enable_esign","true","Boolean","FI Override","Aug 05, 2026 · D. Patel",true],
+      ["popio.enable_id_scan","false","Boolean","Partner Default","Jul 08, 2026 · system",false],
+      ["popio.lobby_hours","Mon–Fri 08:00-18:00; Sat 09:00-13:00","Text","FI Override","Jul 28, 2026 · A. Chen",true],
+      ["popio.max_queue_depth","25","Integer","FI Override","Aug 05, 2026 · D. Patel",true],
+      ["popio.recording_enabled","true","Boolean","Global Default","Locked by policy",false],
+      ["popio.recording_retention_days","365","Integer","Global Default","Locked by policy",false],
+      ["popio.branding_logo_url","https://cdn.srcu.org/popio/logo.svg","URL","FI Override","Jun 19, 2026 · A. Chen",true],
+      ["popio.callback_sms_enabled","true","Boolean","Partner Default","Jul 08, 2026 · system",false]
+    ],
+    keys:[
+      ["Sandbox Primary","pi_sbx_4c72••••••••8d19","appointments:*, queue:*","2027-01-22","active"],
+      ["UAT Integration","pi_uat_9a03••••••••2fb6","appointments:read, esign:write","2026-11-30","active"],
+      ["Reporting Only","pi_live_2e88••••••••70cd","reports:read","2026-09-05","expiring"]
+    ],
+    ent:[
+      ["Scheduled Appointments","Member-booked video sessions",true],
+      ["Walk-in Video Queue","On-demand virtual lobby",true],
+      ["Document eSign","In-session signature capture",true],
+      ["ID Document Scan","Driver's license / passport capture",false],
+      ["Session Recording","Compliance recording + retention",true],
+      ["Co-browse Handoff","Escalate to Glia cobrowse",false]
+    ],
+    hooks:[
+      ["appointment.created","Member booked a session","112",true],
+      ["appointment.cancelled","Cancellation with reason code","19",true],
+      ["queue.member.joined","Walk-in entered virtual lobby","62",true],
+      ["session.completed","Includes disposition + recording ref","174",true],
+      ["esign.document.signed","Signed document available","41",true]
+    ],
+    eps:[["GET","/api/v3/orgs/{org_id}/queues","902 calls · 145 ms"],["POST","/api/v3/appointments","112 calls · 388 ms"],["GET","/api/v3/sessions/{id}","174 calls · 260 ms"],["POST","/api/v3/esign/envelopes","41 calls · 640 ms"]],
+    issues:[],
+    cb:"https://webhooks.alkami.com/partners/popio/summitridgecu/v3"
+  },
+
+  payrailz: {
+    name:"Payrailz", initial:"PR", color:"linear-gradient(135deg,#c8372d,#f2705f)", status:"down",
+    desc:"Money movement — A2A transfers, external accounts, and scheduled payments",
+    category:"Payments", version:"v6.4.2", certified:"Alkami Certified",
+    contract:"MSA-2021-0093", owner:"Payments Platform", sla:"99.99% / P1 15 min",
+    vaultSlug:"payrailz",
+    conn:{base:"https://sandbox-api.payrailz.com/v6", auth:"https://sandbox-api.payrailz.com/oauth2/token",
+          tenant:"fi_srcu_0771", user:"svc_alkami_pay@summitridgecu.org", client:"pz_cid_4b90ff21ac"},
+    stats:[["Uptime (30d)","91.44%","−8.5 vs prior"],["Transfers (24h)","0","1,942 attempted"],
+           ["Avg Latency","—","no successful calls"],["Errors (24h)","1,942","100% of calls"]],
+    vars:[
+      ["payrailz.fi_id","fi_srcu_0771","String","FI Override","Aug 13, 2026 · M. Skolnick",true],
+      ["payrailz.mtls_cert_alias","srcu-payrailz-2025","String","FI Override","Nov 02, 2025 · Platform Ops",true],
+      ["payrailz.daily_limit_cents","500000","Integer","FI Override","Jul 12, 2026 · D. Patel",true],
+      ["payrailz.same_day_enabled","true","Boolean","FI Override","Jul 12, 2026 · D. Patel",true],
+      ["payrailz.cutoff_time","16:00 America/Chicago","String","FI Override","Jun 20, 2026 · A. Chen",true],
+      ["payrailz.risk_engine_mode","block_on_score_gt_80","Enum","Global Default","Locked by policy",false],
+      ["payrailz.retry_failed_transfers","true","Boolean","Partner Default","May 03, 2026 · system",false],
+      ["payrailz.nacha_company_id","1478820031","String","FI Override","Feb 14, 2026 · Payments",true],
+      ["payrailz.settlement_account","XXXXXX4417","Masked","FI Override","Feb 14, 2026 · Payments",true]
+    ],
+    keys:[
+      ["Sandbox Primary","pz_sbx_9d31••••••••4c08","transfers:*, accounts:read","2027-04-02","active"],
+      ["Settlement Batch","pz_sbx_61bc••••••••aa57","settlement:write","2026-10-19","active"]
+    ],
+    ent:[
+      ["A2A Transfers","Account-to-account money movement",true],
+      ["External Account Linking","Micro-deposit + instant verification",true],
+      ["Scheduled Payments","Recurring and future-dated transfers",true],
+      ["Same-Day ACH","Same-day settlement window",true],
+      ["Risk Scoring","Pre-authorization fraud scoring",true],
+      ["Real-Time Payments","RTP rail via TCH",false]
+    ],
+    hooks:[
+      ["transfer.settled","Settlement confirmation from the rail","0",true],
+      ["transfer.returned","ACH return with NACHA reason code","0",true],
+      ["account.verified","Micro-deposit verification result","0",true],
+      ["risk.flagged","Transfer held for manual review","0",true]
+    ],
+    eps:[["POST","/v6/transfers","1,942 calls · TLS handshake failed"],
+         ["GET","/v6/accounts/{id}","0 calls · circuit open"],
+         ["POST","/v6/accounts/verify","0 calls · circuit open"]],
+    issues:[],
+    cb:"https://webhooks.alkami.com/partners/payrailz/summitridgecu/v6"
+  },
+
+  plaid:{name:"Plaid",initial:"PL",color:"linear-gradient(135deg,#111827,#374151)",status:"live",desc:"Account aggregation and data connectivity",category:"Data Aggregation",version:"v2026.06",certified:"Alkami Certified",contract:"MSA-2022-0031",owner:"Data Platform",sla:"99.99% / P1 15 min",vaultSlug:"plaid",conn:{base:"https://sandbox.plaid.com",auth:"https://sandbox.plaid.com/link/token/create",tenant:"inst_srcu_44",user:"svc_alkami@summitridgecu.org",client:"pl_cid_88ab12ce4f"},stats:[["Uptime (30d)","99.99%","stable"],["Links (24h)","406","94% success"],["Avg Latency","178 ms","p95 390 ms"],["Errors (24h)","11","2.7% of links"]],vars:[["plaid.client_name","Summit Ridge CU","String","FI Override","Aug 01, 2026 · M. Skolnick",true],["plaid.products","auth,transactions,identity","List","FI Override","Aug 01, 2026 · M. Skolnick",true],["plaid.link_customization","srcu_default","String","Partner Default","Jun 12, 2026 · system",false],["plaid.webhook_verify","true","Boolean","Global Default","Locked by policy",false]],keys:[["Sandbox","pl_sbx_1f4a••••••••cc21","link:*, auth:read","2027-02-01","active"]],ent:[["Account Auth","Routing + account verification",true],["Transactions","Transaction history pull",true],["Identity","Name/address verification",false]],hooks:[["item.error","Link needs re-auth","14",true],["transactions.sync","New transactions available","388",true]],eps:[["POST","/link/token/create","406 calls · 178 ms"],["POST","/transactions/sync","388 calls · 220 ms"]],issues:[],cb:"https://webhooks.alkami.com/partners/plaid/summitridgecu/v1"},
+
+  zelle:{name:"Zelle",initial:"Z",color:"linear-gradient(135deg,#6d1ed4,#9b4dff)",status:"blocked",desc:"Person-to-person payments network",category:"Payments",version:"v5.1",certified:"Pending certification",contract:"MSA-2026-0088 (draft)",owner:"Payments",sla:"99.95% / P1 15 min",vaultSlug:"zelle",conn:{base:"https://uat-api.zellepay.com/v5",auth:"https://uat-api.zellepay.com/oauth/token",tenant:"prtcpnt_srcu",user:"—",client:"—"},stats:[["Uptime (30d)","—","not enabled"],["Transfers (24h)","0","integration disabled"],["Avg Latency","—","—"],["Errors (24h)","0","—"]],vars:[["zelle.participant_id","prtcpnt_srcu","String","FI Override","Aug 06, 2026 · M. Skolnick",true],["zelle.daily_limit_cents","250000","Integer","FI Override","Aug 06, 2026 · M. Skolnick",true],["zelle.enable_request_money","false","Boolean","Partner Default","—",false]],keys:[],ent:[["Send Money","Outbound P2P transfers",false],["Request Money","Payment requests",false]],hooks:[["payment.completed","Settlement confirmation","0",false]],eps:[],issues:[
+    {sev:"crit",title:"Contract not countersigned — integration cannot be enabled",
+     detail:"<code>MSA-2026-0088</code> is in draft. Legal has not returned the executed agreement, so the partner tenant stays provisioned but inactive.",
+     tab:"overview",ref:"HMON-1002",since:"19 days ago",action:"View contract",impact:"Blocks enablement"},
+    {sev:"crit",title:"Admin credentials have never been stored in the vault",
+     detail:"No service account exists at <code>alkami/partners/zelle</code>. Every authenticated call will fail until credentials are provisioned.",
+     tab:"creds",ref:"HMON-1003",since:"19 days ago",action:"Add credentials",impact:"All calls fail"},
+    {sev:"warn",title:"No API keys issued for this environment",
+     detail:"Zelle requires a participant-scoped key before the certification suite can run.",
+     tab:"keys",ref:"HMON-1004",since:"19 days ago",action:"Issue key",impact:"Blocks certification"}
+  ],cb:"https://webhooks.alkami.com/partners/zelle/summitridgecu/v5"}
+};
+
+const AUDIT = [
+  ["Aug 13, 09:14","M. Skolnick","updated <code>glia.enable_video</code> from <code>false</code> to <code>true</code>","Sandbox"],
+  ["Aug 12, 16:48","D. Patel","issued API key <code>pi_uat_9a03…</code> with scopes <code>appointments:read, esign:write</code>","UAT"],
+  ["Aug 12, 11:02","system","rotated <code>webhook_hmac</code> — rotation overdue by 1 day","Sandbox"],
+  ["Aug 11, 15:31","M. Skolnick","promoted 6 configuration variables from Sandbox to UAT","UAT"],
+  ["Aug 11, 09:05","J. Rivera","changed <code>glia.max_concurrent_sessions</code> from <code>25</code> to <code>50</code>","Sandbox"],
+  ["Aug 09, 13:22","A. Chen","updated connectivity: read timeout <code>10000</code> → <code>15000</code> ms","Sandbox"],
+  ["Aug 08, 08:47","Security","approved change ticket <code>CHG-44182</code> for production credential rotation","Production"],
+  ["Aug 05, 17:10","D. Patel","enabled entitlement <code>Document eSign</code> for Pop.io","Sandbox"],
+  ["Aug 02, 10:33","A. Chen","updated <code>glia.theme_primary_hex</code> to <code>#0F5A8C</code>","Sandbox"],
+  ["Jul 28, 14:19","A. Chen","updated <code>popio.lobby_hours</code>","Sandbox"]
+];
+
+const STATUS_PILL = {live:['ok','Live'],warn:['warn','Degraded'],off:['mut','Disabled'],
+  down:['err','Outage — feature down'],blocked:['err','Blocked — cannot enable']};
+const BROKEN = s => s === 'down' || s === 'blocked';
+let current = 'glia', pending = 0;
+
+/* ---------- sidebar nav ---------- */
+function renderNav(){
+  document.getElementById('nav').innerHTML = Object.entries(PARTNERS).map(([id,p])=>{
+    const crit = (p.issues||[]).filter(i=>i.sev==='crit').length;
+    return `<a href="#" data-id="${id}" class="${id===current?'on':''}" onclick="selectPartner('${id}');return false">
+       ${p.name}
+       ${crit?`<span class="pill err" style="margin-left:auto;padding:1px 7px" title="${crit} critical issue(s)">${crit}</span>`:''}
+       <span class="dot ${p.status}" ${crit?'style="margin-left:6px"':''}></span></a>`;
+  }).join('');
+}
+
+function selectPartner(id){
+  if(pending && !confirm('You have unsaved changes. Discard them and switch partners?')) return;
+  discard(true);
+  current = id; renderNav(); renderPartner();
+  document.querySelector('.tabs button').click();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+/* ---------- render ---------- */
+function renderPartner(){
+  const p = PARTNERS[current];
+  document.getElementById('crumb').textContent = p.name;
+  document.getElementById('pname').textContent = p.name;
+  document.getElementById('pdesc').textContent = p.desc;
+  document.getElementById('dirtyPartner').textContent = p.name;
+  const logo = document.getElementById('plogo');
+  logo.textContent = p.initial; logo.style.background = p.color;
+
+  const [cls,label] = STATUS_PILL[p.status];
+  const critN = (p.issues||[]).filter(i=>i.sev==='crit').length;
+  document.getElementById('ppills').innerHTML =
+    `<span class="pill ${cls}"><i></i> ${label}</span>
+     ${critN?`<span class="pill err" style="cursor:pointer" onclick="document.getElementById('flagsCard').scrollIntoView({behavior:'smooth',block:'center'})"><i></i> ${critN} blocking issue${critN===1?'':'s'}</span>`:''}
+     <span class="pill mut">${p.category}</span>
+     <span class="pill mut">${p.version}</span>
+     <span class="pill info">${p.certified}</span>
+     <span class="pill mut">Contract ${p.contract}</span>`;
+
+  document.getElementById('enableToggle').checked = p.status !== 'off' && p.status !== 'blocked';
+  document.getElementById('vaultSlug').textContent = p.vaultSlug;
+
+  /* overview */
+  document.getElementById('stats').innerHTML = p.stats.map(([k,v,d])=>
+    `<div class="stat"><div class="k">${k}</div><div class="v">${v}</div><div class="d">${d}</div></div>`).join('');
+
+  const rows = [["Partner","<b>"+p.name+"</b>"],["Category",p.category],["Integration Version",p.version],
+    ["Certification",p.certified],["Contract",p.contract],["Internal Owner",p.owner],["SLA",p.sla],
+    ["Vault Path","<code style='font-family:var(--mono);font-size:12px'>alkami/partners/"+p.vaultSlug+"</code>"]];
+  document.getElementById('summary').innerHTML = rows.map(([k,v])=>
+    `<div><div style="font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:#8494a6;font-weight:700">${k}</div>
+     <div style="margin-top:2px">${v}</div></div>`).join('');
+
+  const overrides = p.vars.filter(v=>v[5]).length;
+  const crits = (p.issues||[]).filter(i=>i.sev==='crit');
+  const blocked = tab => crits.some(i=>i.tab===tab);
+  const ready = [
+    ["Connectivity endpoints reachable", !blocked('conn') && !BROKEN(p.status)],
+    ["Admin credentials valid in vault", p.conn.user !== '—' && !blocked('creds')],
+    ["At least one active API key", p.keys.some(k=>k[4]==='active') && !blocked('keys')],
+    ["Required variables populated", overrides>0 && !blocked('vars')],
+    ["Webhook subscriptions verified", !blocked('hooks') && !BROKEN(p.status)],
+    ["Partner-side IP allowlist confirmed", p.status!=='off' && !BROKEN(p.status)]
+  ];
+  document.getElementById('readiness').innerHTML = ready.map(([t,ok])=>
+    `<div style="display:flex;gap:10px;align-items:center;padding:9px 18px;border-bottom:1px solid #eef2f6">
+       <span style="width:18px;height:18px;border-radius:50%;display:grid;place-items:center;font-size:11px;font-weight:800;color:#fff;background:${ok?'var(--green)':'var(--amber)'}">${ok?'✓':'!'}</span>
+       <span style="font-size:13px">${t}</span>
+       <span class="pill ${ok?'ok':'warn'}" style="margin-left:auto">${ok?'Ready':'Action needed'}</span>
+     </div>`).join('');
+
+  document.getElementById('endpoints').innerHTML = p.eps.length
+    ? p.eps.map(([m,u,t])=>`<div class="ep"><span class="m ${m==='POST'?'post':''}">${m}</span><span class="u">${u}</span><span class="t">${t}</span></div>`).join('')
+    : `<div style="padding:22px;text-align:center;color:var(--body);font-size:13px">No traffic — ${
+         p.status==='blocked' ? 'integration has never been enabled.' : 'integration is disabled.'}</div>`;
+
+  /* variables */
+  document.getElementById('varCount').textContent = p.vars.length;
+  document.getElementById('varsSub').textContent =
+    `${p.vars.length} variables · ${overrides} overridden at Summit Ridge CU · scope: Sandbox`;
+  renderVars();
+
+  /* keys */
+  document.getElementById('keyCount').textContent = p.keys.length;
+  document.getElementById('keyRows').innerHTML = p.keys.length ? p.keys.map(([l,k,s,e,st])=>{
+    const map={active:['ok','Active'],expiring:['warn','Expiring soon'],revoked:['err','Revoked']};
+    const [c,t]=map[st];
+    return `<tr><td><b>${l}</b></td>
+      <td><div class="secret"><code>${k}</code><button class="btn sm" onclick="toast('Key copied to clipboard')">Copy</button></div></td>
+      <td style="font-family:var(--mono);font-size:12px;color:var(--body)">${s}</td>
+      <td>${e}</td><td><span class="pill ${c}"><i></i> ${t}</span></td>
+      <td style="text-align:right">${st==='revoked'?'':`<button class="btn sm danger" onclick="revokeKey(this,'${l}')">Revoke</button>`}</td></tr>`;
+  }).join('') : `<tr><td colspan="6" style="padding:22px;text-align:center;color:var(--body)">No keys issued for this environment.</td></tr>`;
+
+  /* connectivity */
+  document.getElementById('baseUrl').value = p.conn.base;
+  document.getElementById('authUrl').value = p.conn.auth;
+  document.getElementById('tenantId').value = p.conn.tenant;
+  document.getElementById('admUser').value = p.conn.user;
+  document.getElementById('clientId').value = p.conn.client;
+  document.getElementById('cbUrl').value = p.cb;
+  const cp = document.getElementById('connPill');
+  const cmap = {live:['ok','Reachable'],warn:['warn','Intermittent'],down:['err','Unreachable — TLS handshake failing'],
+                blocked:['err','Cannot authenticate — no credentials'],off:['mut','Not configured']};
+  cp.className = 'pill ' + cmap[p.status][0];
+  cp.innerHTML = '<i></i> ' + cmap[p.status][1];
+  document.getElementById('testlog').innerHTML = '<span class="dim">Idle — click “Run Test” to validate this configuration against the partner sandbox.</span>';
+
+  /* entitlements */
+  document.getElementById('entRows').innerHTML = p.ent.map(([n,d,on],i)=>
+    `<div style="display:flex;gap:14px;align-items:center;padding:13px 18px;border-bottom:1px solid #eef2f6">
+       <div style="flex:1"><div style="font-weight:600">${n}</div><div style="font-size:12.5px;color:var(--body)">${d}</div></div>
+       <span class="pill ${on?'ok':'mut'}" id="entp${i}">${on?'Enabled':'Disabled'}</span>
+       <label class="sw"><input type="checkbox" ${on?'checked':''} onchange="entToggle(${i},this)"><span></span></label>
+     </div>`).join('');
+
+  /* webhooks */
+  document.getElementById('hookRows').innerHTML = p.hooks.map(([e,d,v,on])=>
+    `<tr><td class="key">${e}</td><td style="color:var(--body)">${d}</td>
+      <td style="font-variant-numeric:tabular-nums">${v}</td>
+      <td><label class="sw"><input type="checkbox" ${on?'checked':''} onchange="dirty()"><span></span></label></td></tr>`).join('');
+
+  /* audit */
+  document.getElementById('auditRows').innerHTML = AUDIT.map(([w,who,what,env])=>
+    `<li><span class="when">${w}</span><span><span class="who">${who}</span> ${what}
+      <span class="scope" style="margin-left:6px">${env}</span></span></li>`).join('');
+
+  renderIssues();
+}
+
+/* ---------- flagged issues ---------- */
+const SEV = {crit:['crit','!','Critical','err'], warn:['warn','▲','Warning','warn'], info:['info','i','Info','info']};
+
+function renderIssues(){
+  const p = PARTNERS[current];
+  const list = p.issues || [];
+  const n = s => list.filter(i=>i.sev===s).length;
+  const crit = n('crit'), warn = n('warn'), info = n('info');
+
+  const outage = p.status === 'down';
+  const card = document.getElementById('flagsCard');
+  card.className = 'card flags' + ((crit||outage) ? '' : warn ? ' degraded' : ' clean');
+
+  document.getElementById('flagsPills').innerHTML = list.length
+    ? `${crit?`<span class="pill err"><i></i> ${crit} Critical</span>`:''}
+       ${warn?`<span class="pill warn"><i></i> ${warn} Warning</span>`:''}
+       ${info?`<span class="pill info"><i></i> ${info} Info</span>`:''}`
+    : outage
+      ? `<span class="pill err"><i></i> Outage in progress</span>`
+      : `<span class="pill ok"><i></i> All checks passing</span>`;
+
+  document.getElementById('flagsSub').textContent = crit
+    ? `${crit} issue${crit===1?'':'s'} can break this feature in ${curEnv()} — promotion is blocked until resolved`
+    : list.length
+      ? 'Non-blocking issues detected by the integration health monitor'
+      : outage
+        ? `No individual issues have been flagged — the integration itself is unreachable in ${curEnv()}`
+        : 'No conditions detected by the integration health monitor';
+
+  document.getElementById('flagsBody').innerHTML = list.length ? list.map(i=>{
+    const [cls,glyph] = SEV[i.sev];
+    return `<div class="issue ${cls}" data-ref="${i.ref}">
+      <span class="sev">${glyph}</span>
+      <div style="min-width:0">
+        <div class="ttl">${i.title}</div>
+        <div class="det">${i.detail}</div>
+        <div class="meta">
+          <span><code>${i.ref}</code></span>
+          <span>Detected ${i.since}</span>
+          <span>Impact: <b style="color:#475569">${i.impact}</b></span>
+        </div>
+      </div>
+      <div class="acts">
+        <button class="btn sm primary" onclick="goIssue('${i.ref}','${i.tab}')">${i.action}</button>
+        <button class="btn sm" onclick="openLogs('${i.ref}')" title="Open the log explorer filtered to this issue">Logs</button>
+        <button class="btn sm" onclick="ackIssue('${i.ref}')" title="Acknowledge and suppress for 24h">Ack</button>
+      </div>
+    </div>`;
+  }).join('') : outage
+    ? `<div class="allclear"><span class="tick" style="background:var(--red)">!</span>
+        <div><b>No flagged issues — but this integration is down.</b> The health monitor cannot evaluate configuration checks
+        because the partner is unreachable: the TLS handshake is failing before any request is sent, and the circuit breaker is open.
+        <div style="margin-top:8px;display:flex;gap:7px">
+          <button class="btn sm primary" onclick="testConnection()">Run diagnostics</button>
+          <button class="btn sm" onclick="openLogs()">View logs</button>
+        </div></div></div>`
+    : `<div class="allclear"><span class="tick">✓</span>
+        <div><b>No flagged issues.</b> Connectivity, credentials, keys, and webhook subscriptions all passed the last health check.</div></div>`;
+
+  renderNav();
+}
+
+function goIssue(ref,tab){
+  const btn = document.querySelector(`.tabs button[data-tab="${tab}"]`);
+  if(btn) btn.click();
+  if(tab === 'conn') testConnection();
+  document.querySelector('.tabs').scrollIntoView({behavior:'smooth',block:'start'});
+  toast(`${ref} — jumped to the configuration that triggered this flag`);
+}
+
+function ackIssue(ref){
+  const p = PARTNERS[current];
+  const idx = p.issues.findIndex(i=>i.ref===ref);
+  if(idx<0) return;
+  p.issues.splice(idx,1);
+  renderIssues();
+  toast(`${ref} acknowledged — suppressed for 24h, still visible in Audit & Compliance`);
+}
+
+/* ---------- log explorer hand-off ---------- */
+function logsUrl(issue){
+  const q = new URLSearchParams({partner:current, env:curEnv().toLowerCase()});
+  if(issue) q.set('issue', issue);
+  return 'logs.html?' + q;
+}
+function openLogs(issue){
+  if(pending && !confirm('You have '+pending+' unsaved change(s). Leave this page and open the log explorer?')) return;
+  location.href = logsUrl(issue);
+}
+
+function runHealthCheck(btn){
+  const label = btn.textContent;
+  btn.disabled = true; btn.textContent = 'Running checks…';
+  document.getElementById('flagsFoot').textContent = 'Probing connectivity, credentials, keys, and webhook subscriptions…';
+  setTimeout(()=>{
+    btn.disabled = false; btn.textContent = label;
+    document.getElementById('flagsFoot').textContent = 'Last health check: just now · monitors run every 5 minutes';
+    const c = (PARTNERS[current].issues||[]).length;
+    toast(c ? `Health check complete — ${c} issue${c===1?'':'s'} still open` : 'Health check complete — no issues found');
+  },1400);
+}
+
+function renderVars(filter=''){
+  const p = PARTNERS[current];
+  const f = filter.toLowerCase();
+  const rows = p.vars.filter(v=>!f || v[0].toLowerCase().includes(f) || String(v[1]).toLowerCase().includes(f));
+  document.getElementById('varRows').innerHTML = rows.length ? rows.map(([k,v,t,s,m,ovr])=>{
+    const locked = m.startsWith('Locked');
+    const ctl = t==='Boolean'
+      ? `<select class="val-in" ${locked?'disabled':''} onchange="dirty()">
+           <option ${v==='true'?'selected':''}>true</option><option ${v==='false'?'selected':''}>false</option></select>`
+      : `<input class="val-in" value="${String(v).replace(/"/g,'&quot;')}" ${locked?'readonly':''} onchange="dirty()">`;
+    return `<tr class="${ovr?'overridden':''}">
+      <td><span class="key">${k}</span>${locked?' <span class="pill mut" style="margin-left:5px">policy</span>':''}</td>
+      <td>${ctl}</td>
+      <td style="color:var(--body);font-size:12.5px">${t}</td>
+      <td><span class="scope">${s}</span></td>
+      <td style="color:#8494a6;font-size:12px">${m}</td></tr>`;
+  }).join('') : `<tr><td colspan="5" style="padding:22px;text-align:center;color:var(--body)">No variables match that filter.</td></tr>`;
+}
+const filterVars = v => renderVars(v);
+
+/* ---------- interactions ---------- */
+function dirty(n=1){
+  pending += n;
+  document.getElementById('dirtyCount').textContent = pending;
+  document.querySelector('.savebar .msg').innerHTML =
+    `<b>${pending}</b> pending change${pending===1?'':'s'} to <b>${PARTNERS[current].name}</b> · ${curEnv()}`;
+  document.getElementById('savebar').classList.add('show');
+}
+function discard(silent){
+  pending = 0;
+  document.getElementById('savebar').classList.remove('show');
+  if(!silent){ renderPartner(); toast('Changes discarded'); }
+}
+function save(){
+  const n = pending;
+  pending = 0;
+  document.getElementById('savebar').classList.remove('show');
+  toast(`Saved ${n} change${n===1?'':'s'} to ${PARTNERS[current].name} (${curEnv()}) · audit entry created`);
+}
+const curEnv = () => document.querySelector('#env button.on').textContent;
+
+function entToggle(i,el){
+  const pill = document.getElementById('entp'+i);
+  pill.className = 'pill ' + (el.checked?'ok':'mut');
+  pill.textContent = el.checked ? 'Enabled' : 'Disabled';
+  dirty();
+}
+function onEnable(el){
+  toast(el.checked ? `${PARTNERS[current].name} enabled for Summit Ridge CU` : `${PARTNERS[current].name} disabled — members will no longer see this feature`);
+  dirty();
+}
+function toggleSecret(id,btn){
+  const el = document.getElementById(id);
+  const showing = el.type === 'text';
+  el.type = showing ? 'password' : 'text';
+  if(!showing && el.value.startsWith('•')) el.value = 'Sv!7qP2x#La9Kd0z';
+  btn.textContent = showing ? 'Reveal' : 'Hide';
+  if(!showing) toast('Secret revealed — this view is logged');
+}
+function copyOf(id){ document.getElementById(id).select?.(); toast('Copied to clipboard'); }
+function rotate(what){
+  if(confirm(what + ' will be rotated. The old value stops working after the 15-minute grace window. Continue?')){
+    toast(what + ' rotated — partner notified via integration contact');
+    dirty();
+  }
+}
+function revokeKey(btn,label){
+  if(!confirm(`Revoke API key “${label}”? Calls using it fail immediately.`)) return;
+  const tr = btn.closest('tr');
+  tr.querySelector('td:nth-child(5)').innerHTML = '<span class="pill err"><i></i> Revoked</span>';
+  btn.remove(); toast(`Key “${label}” revoked`);
+}
+function issueKey(){
+  const label = prompt('Label for the new API key:','Integration Test');
+  if(!label) return;
+  const rand = () => Math.random().toString(36).slice(2,6);
+  document.getElementById('keyRows').insertAdjacentHTML('afterbegin',
+    `<tr><td><b>${label}</b></td>
+     <td><div class="secret"><code>${PARTNERS[current].vaultSlug.slice(0,2)}_sbx_${rand()}••••••••${rand()}</code>
+       <button class="btn sm" onclick="toast('Key copied to clipboard')">Copy</button></div></td>
+     <td style="font-family:var(--mono);font-size:12px;color:var(--body)">read-only (edit scopes)</td>
+     <td>2027-08-13</td><td><span class="pill ok"><i></i> Active</span></td>
+     <td style="text-align:right"><button class="btn sm danger" onclick="revokeKey(this,'${label}')">Revoke</button></td></tr>`);
+  toast('Key issued — full value shown once, copy it now');
+  dirty();
+}
+function addVar(){
+  const k = prompt('Variable key (e.g. ' + current + '.new_setting):', current + '.');
+  if(!k || k === current + '.') return;
+  const v = prompt('Value for ' + k + ':','');
+  if(v === null) return;
+  PARTNERS[current].vars.unshift([k, v, 'String', 'FI Override', 'Just now · M. Skolnick', true]);
+  document.getElementById('varCount').textContent = PARTNERS[current].vars.length;
+  renderVars(); dirty();
+}
+function openDeploy(){
+  const env = curEnv();
+  const next = env === 'Sandbox' ? 'UAT' : 'Production';
+  if(confirm(`Promote ${PARTNERS[current].name} configuration from ${env} to ${next}?\n\n` +
+     `• ${PARTNERS[current].vars.length} variables\n• Connectivity + entitlements\n• Secrets are NOT copied — re-enter per environment\n\n` +
+     (next === 'Production' ? 'Production requires an approved change ticket.' : 'A diff will be generated for review.')))
+    toast(`Promotion request submitted to ${next} — awaiting approval from Platform Ops`);
+}
+
+/* connection test */
+function testConnection(){
+  document.querySelector('[data-tab="conn"]').click();
+  const p = PARTNERS[current], log = document.getElementById('testlog');
+  const host = p.conn.base.replace(/^https?:\/\//,'').split('/')[0];
+  const down = p.status === 'down';
+  const degraded = p.status === 'warn';
+  const steps = p.status === 'blocked' ? [
+    [`$ probe --partner ${current} --env ${curEnv().toLowerCase()}`,'dim'],
+    [`→ Resolving ${host} ... <span class="ok">54.87.120.31 (16 ms)</span>`,''],
+    [`→ TLS handshake ... <span class="ok">TLS 1.3 / ECDHE-RSA-AES256-GCM (52 ms)</span>`,''],
+    [`→ Loading credentials ... <span class="bad">FAILED — vault lookup miss at alkami/partners/${p.vaultSlug}</span>`,''],
+    [`   <span class="dim">no service account has ever been provisioned for this integration</span>`,''],
+    [`→ Auth (client_credentials) ... <span class="bad">SKIPPED — no credentials to present</span>`,''],
+    [`→ Sample call ... <span class="bad">SKIPPED</span>`,''],
+    [`→ Enablement gate ... <span class="bad">BLOCKED — contract ${p.contract} is not countersigned</span>`,''],
+    ['',''],
+    ['<span class="bad">RESULT: FAIL</span> — integration cannot be enabled. Resolve the contract and provision credentials first.','']
+  ] : down ? [
+    [`$ probe --partner ${current} --env ${curEnv().toLowerCase()}`,'dim'],
+    [`→ Resolving ${host} ... <span class="ok">18.204.77.9 (14 ms)</span>`,''],
+    [`→ TCP connect :443 ... <span class="ok">established (21 ms)</span>`,''],
+    [`→ TLS handshake ... <span class="bad">FAILED — alert 42 (bad_certificate)</span>`,''],
+    [`   <span class="dim">client cert "srcu-payrailz-2025" notAfter=2026-08-13T02:00:00Z (expired 7h ago)</span>`,''],
+    [`   <span class="dim">partner rejected the handshake before any request was sent</span>`,''],
+    [`→ Auth (client_credentials) ... <span class="bad">SKIPPED — no secure channel</span>`,''],
+    [`→ Sample call ${p.eps.length?p.eps[0][1]:'/health'} ... <span class="bad">SKIPPED — circuit breaker OPEN (84 probes)</span>`,''],
+    [`→ Webhook reachability ... <span class="bad">0 of 4 subscriptions delivering (silent 7h)</span>`,''],
+    ['',''],
+    ['<span class="bad">RESULT: FAIL</span> — integration is hard-down. Upload a valid mTLS client certificate to restore service.','']
+  ] : [
+    [`$ probe --partner ${current} --env ${curEnv().toLowerCase()}`,'dim'],
+    [`→ Resolving ${host} ... <span class="ok">34.218.11.4 (12 ms)</span>`,''],
+    [`→ TLS handshake ... <span class="ok">TLS 1.3 / ECDHE-RSA-AES256-GCM (48 ms)</span>`,''],
+    [`→ Certificate chain ... <span class="ok">valid, expires 2027-01-18</span>`,''],
+    [`→ Auth (client_credentials) ... <span class="ok">200 OK, token ttl 3600s (${degraded?412:186} ms)</span>`,''],
+    [`→ Sample call ${p.eps.length?p.eps[0][1]:'/health'} ... ${degraded
+        ? '<span class="warn">200 OK but p95 exceeds 500 ms budget (612 ms)</span>'
+        : '<span class="ok">200 OK (98 ms)</span>'}`,''],
+    [`→ Webhook reachability ... <span class="${degraded?'warn':'ok'}">${degraded?'2 of 5 subscriptions unverified':'all subscriptions verified'}</span>`,''],
+    ['', ''],
+    [degraded
+      ? '<span class="warn">RESULT: PASS WITH WARNINGS</span> — 2 items need attention before promotion.'
+      : '<span class="ok">RESULT: PASS</span> — configuration is valid for promotion.','']
+  ];
+  log.innerHTML = '';
+  let i = 0;
+  (function tick(){
+    if(i >= steps.length) return;
+    const [line,cls] = steps[i++];
+    log.innerHTML += (cls ? `<span class="${cls}">${line}</span>` : line) + '\n';
+    setTimeout(tick, line ? 320 : 120);
+  })();
+}
+
+/* env switch */
+document.getElementById('env').addEventListener('click', e => {
+  const b = e.target.closest('button'); if(!b) return;
+  if(pending && !confirm('Unsaved changes will be lost when switching environments. Continue?')) return;
+  discard(true);
+  [...e.currentTarget.children].forEach(x=>x.classList.remove('on'));
+  b.classList.add('on');
+  const env = b.dataset.env, banner = document.getElementById('envBanner');
+  const copy = {
+    sandbox:['warn','⚠️','<b>Sandbox environment</b>Changes here do not affect live members. Promote to UAT after validation; production changes require a change ticket and dual approval.'],
+    uat:['info','🧪','<b>UAT environment</b>Shared with the partner’s certification team. Coordinate before changing connectivity or rotating secrets.'],
+    prod:['warn','🚨','<b>Production environment</b>All edits require an approved change ticket and a second approver. Every field below is write-audited in real time.']
+  }[env];
+  banner.className = 'banner ' + copy[0];
+  banner.innerHTML = `<span>${copy[1]}</span><div>${copy[2]}</div>`;
+  renderPartner();
+  toast('Switched to ' + b.textContent);
+});
+
+/* tabs */
+document.getElementById('tabs').addEventListener('click', e => {
+  const b = e.target.closest('button'); if(!b) return;
+  [...e.currentTarget.children].forEach(x=>x.classList.remove('on'));
+  b.classList.add('on');
+  document.querySelectorAll('.tabpane').forEach(p=>p.classList.add('hide'));
+  document.getElementById('pane-' + b.dataset.tab).classList.remove('hide');
+});
+
+/* toast */
+let toastTimer;
+function toast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>t.classList.remove('show'), 2600);
+}
+
+/* honour ?partner= so the log explorer's back link returns to the right integration */
+const qp = new URLSearchParams(location.search);
+if(PARTNERS[qp.get('partner')]) current = qp.get('partner');
+
+renderNav(); renderPartner();
+</script>
+</body>
+</html>

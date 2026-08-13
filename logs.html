@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Unified Log Explorer — Partnership Integration Portal</title>
+<style>
+:root{
+  --navy:#0d1b2a;--navy-2:#132436;--navy-3:#1b3049;
+  --teal:#00b3ae;--teal-d:#009390;
+  --ink:#101b28;--body:#5a6b7d;--line:#e2e8f0;--bg:#f4f6f9;--card:#fff;
+  --green:#12a150;--green-bg:#e7f7ee;--amber:#b7791f;--amber-bg:#fdf3e0;
+  --red:#c8372d;--red-bg:#fdeceb;--blue:#2563eb;--blue-bg:#e8effd;
+  --radius:10px;--shadow:0 1px 2px rgba(16,27,40,.06),0 4px 14px rgba(16,27,40,.05);
+  --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
+  /* severity scale — status roles, validated vs the light chart surface */
+  --sev-error:#d03b3b;   /* status: critical */
+  --sev-warn:#fab219;    /* status: warning  */
+  --sev-info:#2a78d6;
+  --sev-debug:#8a8a85;
+  --surface-1:#fcfcfb;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif;
+  background:var(--bg);color:var(--ink);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+button{font:inherit;cursor:pointer}
+input,select{font:inherit;color:inherit}
+a{color:var(--teal-d);text-decoration:none}
+
+/* topbar */
+.top{background:#fff;border-bottom:1px solid var(--line);height:58px;display:flex;align-items:center;
+  gap:14px;padding:0 22px;position:sticky;top:0;z-index:30}
+.back{display:flex;align-items:center;gap:7px;font-weight:600;font-size:13.5px;color:var(--ink)}
+.back:hover{color:var(--teal-d)}
+.top .div{width:1px;height:24px;background:var(--line)}
+.top h1{font-size:15px;margin:0}
+.top .ctx{font-size:12.5px;color:var(--body)}
+.spacer{flex:1}
+.env{display:flex;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:3px}
+.env button{border:0;background:transparent;padding:5px 12px;border-radius:6px;font-size:12.5px;color:var(--body);font-weight:600}
+.env button.on{background:#fff;color:var(--ink);box-shadow:var(--shadow)}
+
+.pill{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:700;padding:3px 9px;border-radius:999px}
+.pill i{width:6px;height:6px;border-radius:50%;background:currentColor;display:block}
+.pill.ok{background:var(--green-bg);color:var(--green)}
+.pill.warn{background:var(--amber-bg);color:var(--amber)}
+.pill.err{background:var(--red-bg);color:var(--red)}
+.pill.info{background:var(--blue-bg);color:var(--blue)}
+.pill.mut{background:#eef2f6;color:#64748b}
+
+.btn{border:1px solid var(--line);background:#fff;color:var(--ink);padding:7px 13px;border-radius:8px;font-size:13px;font-weight:600}
+.btn:hover{border-color:#c3cedb;background:#fbfcfd}
+.btn.primary{background:var(--teal);border-color:var(--teal);color:#fff}
+.btn.primary:hover{background:var(--teal-d)}
+.btn.sm{padding:4px 9px;font-size:12px;border-radius:6px}
+.btn.on{background:var(--ink);border-color:var(--ink);color:#fff}
+
+/* layout */
+.wrap{display:grid;grid-template-columns:246px 1fr;align-items:start}
+.rail{background:#fff;border-right:1px solid var(--line);min-height:calc(100vh - 58px);padding:16px 0;
+  position:sticky;top:58px;max-height:calc(100vh - 58px);overflow:auto}
+.rail h3{font-size:10.5px;text-transform:uppercase;letter-spacing:.7px;color:#8494a6;margin:0;padding:0 16px 8px}
+.rail h3 .clr{float:right;color:var(--teal-d);cursor:pointer;text-transform:none;letter-spacing:0;font-size:11px}
+.facet{display:flex;align-items:center;gap:9px;padding:7px 16px;cursor:pointer;font-size:13px;border-left:3px solid transparent}
+.facet:hover{background:#f7f9fb}
+.facet.on{background:#f0fbfa;border-left-color:var(--teal);font-weight:600}
+.facet .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.facet .ct{font-size:11.5px;color:#8494a6;font-variant-numeric:tabular-nums}
+.facet .err{font-size:11px;color:var(--red);font-weight:700;font-variant-numeric:tabular-nums}
+.rail .sep{height:1px;background:var(--line);margin:14px 0}
+
+.main{padding:18px 22px 60px;min-width:0}
+
+/* deep-link banner */
+.banner{display:flex;gap:11px;align-items:center;padding:11px 15px;border-radius:9px;font-size:13px;margin-bottom:16px;
+  background:var(--blue-bg);border:1px solid #cfdefb;color:#1d4ed8}
+.banner b{font-weight:700}
+.banner .x{margin-left:auto;cursor:pointer;font-weight:700;opacity:.7}
+.banner .x:hover{opacity:1}
+
+/* filter row */
+.filters{display:flex;gap:9px;align-items:center;flex-wrap:wrap;margin-bottom:16px}
+.search{flex:1;min-width:260px;position:relative}
+.search input{width:100%;padding:9px 12px 9px 32px;border:1px solid #d7dfe8;border-radius:8px;background:#fff;
+  outline:0;font-family:var(--mono);font-size:12.5px}
+.search input:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(0,179,174,.14)}
+.search .mg{position:absolute;left:11px;top:9px;color:#94a3b8;font-size:13px}
+.sel{padding:8px 10px;border:1px solid #d7dfe8;border-radius:8px;background:#fff}
+.lvls{display:flex;gap:5px}
+.lvl{display:flex;align-items:center;gap:6px;border:1px solid #d7dfe8;background:#fff;padding:6px 10px;
+  border-radius:8px;font-size:12px;font-weight:700;color:var(--body)}
+.lvl .sw{width:9px;height:9px;border-radius:2px;display:block}
+.lvl.off{opacity:.4}
+.lvl:hover{border-color:#c3cedb}
+
+/* card */
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);
+  margin-bottom:16px;overflow:hidden}
+.card > header{padding:13px 16px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+.card > header h2{font-size:14px;margin:0}
+.card > header p{margin:2px 0 0;font-size:12px;color:var(--body)}
+.card > header .acts{margin-left:auto;display:flex;gap:8px;align-items:center}
+
+/* ---- histogram (stacked bars, status-encoded) ---- */
+.chart{padding:14px 16px 8px;background:var(--surface-1)}
+.plot{position:relative;height:104px;display:flex;align-items:flex-end;gap:2px}
+.plot .grid{position:absolute;inset:0;pointer-events:none}
+.plot .grid div{position:absolute;left:0;right:0;border-top:1px solid #eceef0}
+.plot .grid span{position:absolute;right:0;top:-8px;font-size:10px;color:#94a3b8;background:var(--surface-1);padding-left:4px}
+.bar{flex:1;display:flex;flex-direction:column;justify-content:flex-end;gap:2px;height:100%;position:relative;cursor:pointer;min-width:0}
+.bar .seg{width:100%;min-height:2px}
+.bar .seg:first-child{border-radius:4px 4px 0 0}
+.bar:hover .seg{filter:brightness(1.08)}
+.bar.sel{outline:2px solid var(--ink);outline-offset:1px;border-radius:5px}
+.bar .peak{position:absolute;top:-15px;left:50%;transform:translateX(-50%);font-size:10px;font-weight:700;
+  color:var(--body);white-space:nowrap}
+.xaxis{display:flex;gap:2px;margin-top:6px}
+.xaxis span{flex:1;text-align:center;font-size:10px;color:#94a3b8;font-variant-numeric:tabular-nums;min-width:0;overflow:hidden}
+.legend{display:flex;gap:16px;padding:10px 16px;border-top:1px solid var(--line);flex-wrap:wrap;align-items:center}
+.legend .it{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--body)}
+.legend .it .sw{width:10px;height:10px;border-radius:3px}
+.legend .it b{color:var(--ink);font-variant-numeric:tabular-nums}
+.legend .note{margin-left:auto;font-size:11.5px;color:#94a3b8}
+
+.tip{position:fixed;background:var(--ink);color:#fff;padding:9px 11px;border-radius:8px;font-size:12px;
+  pointer-events:none;opacity:0;transition:opacity .12s;z-index:60;box-shadow:0 8px 24px rgba(16,27,40,.3);min-width:150px}
+.tip.show{opacity:1}
+.tip .h{font-weight:700;margin-bottom:5px;font-size:12px}
+.tip .r{display:flex;gap:10px;align-items:center;margin-top:2px}
+.tip .r .sw{width:8px;height:8px;border-radius:2px}
+.tip .r .n{margin-left:auto;font-variant-numeric:tabular-nums;font-weight:700}
+.tip .r .lb{color:#b6c4d3}
+
+/* ---- log table ---- */
+.logs{font-family:var(--mono);font-size:12.5px}
+.lrow{display:grid;grid-template-columns:150px 74px 176px 1fr 118px;gap:12px;padding:8px 16px;
+  border-bottom:1px solid #f1f5f9;cursor:pointer;align-items:baseline}
+.lrow:hover{background:#f8fafc}
+.lrow.open{background:#f8fafc}
+.lrow .ts{color:#8494a6;font-variant-numeric:tabular-nums;white-space:nowrap}
+.lrow .lv{font-weight:700;font-size:10.5px;letter-spacing:.4px;padding:1px 6px;border-radius:4px;
+  text-align:center;justify-self:start;display:inline-flex;align-items:center;gap:4px}
+.lv.ERROR{background:#fbe9e9;color:#a52a2a}
+.lv.WARN{background:#fdf3e0;color:#8a5a12}
+.lv.INFO{background:#e9f1fc;color:#1d4ed8}
+.lv.DEBUG{background:#f1f2f4;color:#5f6368}
+.lrow .dm{color:#475569;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lrow .dm .dot{display:inline-block;width:7px;height:7px;border-radius:2px;margin-right:6px;vertical-align:middle}
+.lrow .ms{color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lrow .ms em{font-style:normal;background:#fff3b0;border-radius:2px;padding:0 1px}
+.lrow .tr{color:#94a3b8;text-align:right;white-space:nowrap;font-size:11.5px}
+.lrow .tr:hover{color:var(--teal-d);text-decoration:underline}
+.lrow.hasref{box-shadow:inset 3px 0 0 var(--sev-error)}
+
+.detail{background:#0e1b28;color:#c7d6e5;padding:14px 18px;font-family:var(--mono);font-size:12px;line-height:1.75;
+  border-bottom:1px solid #f1f5f9;overflow-x:auto}
+.detail .k{color:#7dd3fc}.detail .s{color:#a7f3d0}.detail .n{color:#fcd34d}.detail .p{color:#64809c}
+.detail .acts{margin-top:11px;display:flex;gap:7px;flex-wrap:wrap}
+.detail .acts button{background:#1b2f42;border:1px solid #29435c;color:#c7d6e5;padding:4px 9px;border-radius:6px;
+  font-size:11.5px;font-family:inherit}
+.detail .acts button:hover{background:#26415a}
+
+.tbl-foot{padding:11px 16px;display:flex;align-items:center;gap:12px;background:#fafbfc;border-top:1px solid var(--line)}
+.tbl-foot .n{font-size:12.5px;color:var(--body)}
+.empty{padding:40px 16px;text-align:center;color:var(--body);font-size:13px}
+
+/* trace waterfall */
+.wf{padding:6px 16px 14px}
+.wfrow{display:grid;grid-template-columns:186px 1fr 66px;gap:12px;align-items:center;padding:5px 0;font-size:12.5px}
+.wfrow .nm{font-family:var(--mono);font-size:11.5px;color:#475569;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wfrow .track{position:relative;height:16px;background:#f1f5f9;border-radius:4px}
+.wfrow .span{position:absolute;top:0;bottom:0;border-radius:4px;min-width:3px}
+.wfrow .ms{text-align:right;font-family:var(--mono);font-size:11.5px;color:var(--body);font-variant-numeric:tabular-nums}
+.wf .scale{display:flex;justify-content:space-between;font-size:10px;color:#94a3b8;
+  margin:2px 0 0 198px;padding-right:78px}
+
+.toast{position:fixed;bottom:22px;right:22px;background:var(--ink);color:#fff;padding:11px 16px;border-radius:9px;
+  font-size:13px;box-shadow:0 8px 28px rgba(16,27,40,.28);opacity:0;transform:translateY(8px);transition:.2s;z-index:70;pointer-events:none}
+.toast.show{opacity:1;transform:none}
+.hide{display:none !important}
+
+@media(max-width:1000px){
+  .wrap{grid-template-columns:1fr}
+  .rail{position:static;max-height:none;min-height:0;border-right:0;border-bottom:1px solid var(--line)}
+  .lrow{grid-template-columns:118px 68px 1fr;gap:8px}
+  .lrow .dm,.lrow .tr{display:none}
+}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <a class="back" href="index.html" id="backLink">← Partner Hub</a>
+  <span class="div"></span>
+  <div>
+    <h1>Unified Log Explorer</h1>
+    <div class="ctx" id="ctx">Glia · Summit Ridge CU · all domains</div>
+  </div>
+  <div class="spacer"></div>
+  <button class="btn sm" id="tailBtn" onclick="toggleTail(this)">▶ Live tail</button>
+  <div class="env" id="env">
+    <button class="on" data-env="sandbox">Sandbox</button>
+    <button data-env="uat">UAT</button>
+    <button data-env="prod">Production</button>
+  </div>
+  <button class="btn sm" onclick="toast('Exported 1,000 lines to logs.ndjson')">Export</button>
+</header>
+
+<div class="wrap">
+  <!-- ---------------- facet rail ---------------- -->
+  <aside class="rail">
+    <h3>Domains <span class="clr" onclick="clearDomains()">reset</span></h3>
+    <div id="domFacets"></div>
+    <div class="sep"></div>
+    <h3>Correlated Issues</h3>
+    <div id="issueFacets"></div>
+    <div class="sep"></div>
+    <h3>Saved Views</h3>
+    <div class="facet" onclick="applySaved('errors')"><span class="nm">Errors, last hour</span></div>
+    <div class="facet" onclick="applySaved('auth')"><span class="nm">Auth &amp; token failures</span></div>
+    <div class="facet" onclick="applySaved('hooks')"><span class="nm">Webhook rejections</span></div>
+    <div class="facet" onclick="applySaved('slow')"><span class="nm">Latency &gt; 500 ms</span></div>
+  </aside>
+
+  <!-- ---------------- main ---------------- -->
+  <main class="main">
+    <div class="banner hide" id="deepBanner"></div>
+
+    <div class="filters">
+      <div class="search">
+        <span class="mg">⌕</span>
+        <input id="q" placeholder='Search message, service, trace, or field  —  e.g.  status:401  latency>500  hmac' oninput="onQuery(this.value)">
+      </div>
+      <select class="sel" id="range" onchange="render()">
+        <option value="24">Last 24 hours</option>
+        <option value="6">Last 6 hours</option>
+        <option value="1">Last 1 hour</option>
+      </select>
+      <div class="lvls" id="lvls"></div>
+    </div>
+
+    <!-- histogram -->
+    <div class="card">
+      <header>
+        <div><h2>Log volume by severity</h2><p id="chartSub">Hourly buckets · click a bar to filter to that hour</p></div>
+        <div class="acts"><span class="pill mut" id="totalPill">0 events</span></div>
+      </header>
+      <div class="chart">
+        <div class="plot" id="plot"></div>
+        <div class="xaxis" id="xaxis"></div>
+      </div>
+      <div class="legend" id="legend"></div>
+    </div>
+
+    <!-- trace waterfall -->
+    <div class="card hide" id="traceCard">
+      <header>
+        <div><h2>Trace <span id="traceId" style="font-family:var(--mono);font-size:13px"></span></h2>
+        <p>One member request as it crosses every domain</p></div>
+        <div class="acts"><span class="pill mut" id="traceTotal"></span>
+        <button class="btn sm" onclick="clearTrace()">Close</button></div>
+      </header>
+      <div class="wf" id="wf"></div>
+    </div>
+
+    <!-- log stream -->
+    <div class="card">
+      <header>
+        <div><h2>Log stream</h2><p id="streamSub"></p></div>
+        <div class="acts">
+          <button class="btn sm" onclick="expandAll()">Expand all</button>
+          <button class="btn sm" onclick="toast('Opens the alert-rule builder seeded with this query')">Create alert from query</button>
+        </div>
+      </header>
+      <div class="logs" id="logs"></div>
+      <div class="tbl-foot">
+        <span class="n" id="shown"></span>
+        <div style="margin-left:auto;display:flex;gap:8px">
+          <button class="btn sm" id="moreBtn" onclick="showMore()">Load 100 more</button>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div class="tip" id="tip"></div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* =========================================================================
+   Deterministic demo log corpus — no live backend
+   ========================================================================= */
+const params = new URLSearchParams(location.search);
+const PARTNER = (params.get('partner') || 'glia').toLowerCase();
+const ISSUE   = params.get('issue');
+const ENVQ    = params.get('env') || 'sandbox';
+
+const PARTNER_META = {
+  glia:     {name:'Glia',     host:'api.sandbox.glia.com',        slug:'glia'},
+  popio:    {name:'Pop.io',   host:'sandbox-api.pop.io',          slug:'popio'},
+  payrailz: {name:'Payrailz', host:'sandbox-api.payrailz.com',    slug:'payrailz'},
+  plaid: {name:'Plaid',  host:'sandbox.plaid.com',         slug:'plaid'},
+  zelle: {name:'Zelle',  host:'uat-api.zellepay.com',      slug:'zelle'}
+};
+const PM = PARTNER_META[PARTNER] || PARTNER_META.glia;
+
+const DOMAINS = [
+  {id:'web',      name:'Digital Banking — Web',    svc:'db-web-shell',        c:'#2a78d6'},
+  {id:'mobile',   name:'Digital Banking — Mobile', svc:'db-mobile-bff',       c:'#1baf7a'},
+  {id:'orch',     name:'Orchestration API',        svc:'partner-orchestrator',c:'#4a3aa7'},
+  {id:'gateway',  name:'Partner Gateway',          svc:'egress-proxy',        c:'#eb6834'},
+  {id:'identity', name:'Identity & SSO',           svc:'auth-broker',         c:'#e87ba4'},
+  {id:'webhook',  name:'Webhook Receiver',         svc:'hook-ingress',        c:'#eda100'},
+  {id:'vault',    name:'Secrets Vault',            svc:'vault-agent',         c:'#008300'},
+  {id:'config',   name:'Config Service',           svc:'cfg-resolver',        c:'#0891b2'},
+  {id:'audit',    name:'Audit & Compliance',       svc:'audit-writer',        c:'#7c3aed'},
+  {id:'cdn',      name:'Widget CDN',               svc:'edge-cache',          c:'#64748b'}
+];
+const DOM = Object.fromEntries(DOMAINS.map(d=>[d.id,d]));
+
+const LEVELS = [
+  {id:'ERROR', c:'var(--sev-error)', hex:'#d03b3b'},
+  {id:'WARN',  c:'var(--sev-warn)',  hex:'#fab219'},
+  {id:'INFO',  c:'var(--sev-info)',  hex:'#2a78d6'},
+  {id:'DEBUG', c:'var(--sev-debug)', hex:'#8a8a85'}
+];
+
+/* seeded PRNG so every reload shows the same corpus */
+let _s = 0x9e3779b9;
+function rnd(){ _s|=0;_s=_s+0x6D2B79F5|0; let t=Math.imul(_s^_s>>>15,1|_s); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }
+const pick = a => a[Math.floor(rnd()*a.length)];
+const hex = n => Array.from({length:n},()=>'0123456789abcdef'[Math.floor(rnd()*16)]).join('');
+
+/* "now" is fixed for the demo so timestamps are stable */
+const NOW = new Date('2026-08-13T09:20:00');
+const HOUR = 3600e3;
+const fmt = d => d.toLocaleTimeString('en-US',{hour12:false}) + '.' + String(d.getMilliseconds()).padStart(3,'0');
+const fmtDay = d => d.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+
+/* ---- story lines: the logs behind each flagged issue ---- */
+const STORY = {
+ glia:[
+  {h:0.15,lvl:'ERROR',dom:'webhook',ref:'HMON-1042',msg:'Rejected callback: HMAC signature mismatch — secret past rotation deadline',
+   f:{event:'transcript.available',signature_alg:'HMAC-SHA256',key_id:'whsec_2024_11',status:401,expected_key_id:'whsec_2026_08',remediation:'rotate webhook_hmac'}},
+  {h:0.4,lvl:'ERROR',dom:'webhook',ref:'HMON-1042',msg:'Rejected callback: HMAC signature mismatch — secret past rotation deadline',
+   f:{event:'session.ended',key_id:'whsec_2024_11',status:401}},
+  {h:0.6,lvl:'WARN',dom:'audit',ref:'HMON-1042',msg:'Transcript archival gap detected — 14 sessions with no transcript in 60 min',
+   f:{expected:14,received:0,retention_policy:'90d',compliance_impact:'FFIEC record retention'}},
+  {h:1.2,lvl:'ERROR',dom:'identity',ref:'HMON-1067',msg:'JWT issuer mismatch: token iss=login.summitridgecu.org, expected sso.summitridgecu.org',
+   f:{config_key:'glia.sso_jwt_issuer',token_iss:'login.summitridgecu.org',configured_iss:'sso.summitridgecu.org',status:403,operator:'svc_alkami_admin'}},
+  {h:1.25,lvl:'ERROR',dom:'orch',ref:'HMON-1067',msg:'Operator authentication failed — downstream 403 from identity broker',
+   f:{partner:'glia',attempt:3,retries_exhausted:true,circuit_state:'half-open'}},
+  {h:1.3,lvl:'WARN',dom:'config',ref:'HMON-1067',msg:'Config drift: glia.sso_jwt_issuer differs between sandbox and UAT resolution',
+   f:{sandbox:'sso.summitridgecu.org',uat:'login.summitridgecu.org',scope:'FI Override',fi:'summitridgecu'}},
+  {h:2.1,lvl:'WARN',dom:'gateway',ref:'HMON-0988',msg:'API key gl_live_0c9a… expires in 7 days and served 1,204 requests today',
+   f:{key_label:'Legacy Widget',expires_at:'2026-08-20',calls_24h:1204,scopes:['sessions:read'],replacement_issued:false}},
+  {h:3.4,lvl:'WARN',dom:'gateway',ref:'HMON-1015',msg:'Egress from 3.221.44.17 refused by partner allowlist',
+   f:{egress_ip:'3.221.44.17',partner_response:'403 ip_not_allowlisted',failover_path:true,note:'added during June failover build-out'}},
+  {h:4.0,lvl:'INFO',dom:'config',ref:'CHG-44219',msg:'Configuration change applied: glia.enable_video false → true',
+   f:{actor:'m.skolnick',change_ticket:'CHG-44219',scope:'FI Override',env:'sandbox',baseline_window_hours:24}},
+  {h:4.1,lvl:'INFO',dom:'orch',msg:'Feature entitlement cache invalidated for 12,481 members',
+   f:{feature:'video_banking',members:12481,propagation_ms:840}}
+ ],
+ popio:[
+  {h:0.2,lvl:'ERROR',dom:'identity',ref:'HMON-1071',msg:'OAuth token exchange exceeded latency budget (612 ms > 500 ms)',
+   f:{endpoint:'/oauth2/token',latency_ms:612,budget_ms:500,p95_ms:612,grant_type:'client_credentials'}},
+  {h:0.35,lvl:'ERROR',dom:'orch',ref:'HMON-1071',msg:'Virtual lobby handoff timed out waiting on partner token',
+   f:{queue:'virtual-branch-01',waited_ms:5000,members_affected:3,disposition:'generic_error_shown'}},
+  {h:0.9,lvl:'ERROR',dom:'webhook',ref:'HMON-1058',msg:'Subscription verification handshake never completed for appointment.cancelled',
+   f:{event:'appointment.cancelled',callback_url_changed:'2026-08-05',verified:false,missed_events_est:19}},
+  {h:1.1,lvl:'ERROR',dom:'webhook',ref:'HMON-1058',msg:'Subscription verification handshake never completed for esign.document.signed',
+   f:{event:'esign.document.signed',verified:false,missed_events_est:41}},
+  {h:2.3,lvl:'WARN',dom:'orch',ref:'HMON-1049',msg:'Virtual lobby queue depth ceiling reached — 6 members turned away',
+   f:{config_key:'popio.max_queue_depth',ceiling:25,observed_peak:31,turned_away:6,member_message:'generic'}},
+  {h:3.1,lvl:'WARN',dom:'gateway',ref:'HMON-0994',msg:'Reporting key pi_live_2e88… expires 2026-09-05 (Saturday, no batch on-call)',
+   f:{key_label:'Reporting Only',expires_at:'2026-09-05',consumer:'nightly-appointment-recon'}},
+  {h:4.4,lvl:'INFO',dom:'config',ref:'CAT-2201',msg:'Partner catalog: Pop.io v3.9 published; pinned v3.8.0 deprecates 2026-11-01',
+   f:{current:'v3.8.0',available:'v3.9',deprecation_date:'2026-11-01',certification:'passed'}}
+ ],
+ payrailz:[
+  {h:7.1,lvl:'ERROR',dom:'gateway',ref:'HMON-1099',msg:'TLS handshake failed: alert 42 bad_certificate — client cert expired',
+   f:{cert_alias:'srcu-payrailz-2025',not_after:'2026-08-13T02:00:00Z',expired_hours:7,tls_alert:42,
+      handshake_stage:'client_certificate',requests_sent:0,remediation:'upload renewed mTLS client certificate'}},
+  {h:6.9,lvl:'ERROR',dom:'gateway',ref:'HMON-1101',msg:'Circuit breaker OPEN after 5 consecutive handshake failures',
+   f:{breaker:'payrailz-egress',state:'open',opened_at:'2026-08-13T02:14:00Z',half_open_probes:84,probes_passed:0}},
+  {h:6.4,lvl:'ERROR',dom:'orch',ref:'HMON-1101',msg:'Transfer submission failed — no healthy upstream for partner payrailz',
+   f:{transfer_id:'trf_9d41cc02',amount_cents:145000,rail:'ach_same_day',attempt:3,disposition:'dead_letter'}},
+  {h:5.2,lvl:'ERROR',dom:'orch',ref:'HMON-1103',msg:'Dead-letter queue depth 1,942 — same-day ACH cutoff in 6h 40m',
+   f:{queue:'payrailz-transfer-dlq',depth:1942,cutoff_time:'16:00 America/Chicago',
+      config_key:'payrailz.cutoff_time',member_notification_required:true}},
+  {h:4.8,lvl:'ERROR',dom:'web',ref:'HMON-1101',msg:'Member-facing transfer failed with generic error (partner unavailable)',
+   f:{screen:'move_money',error_shown:'We could not complete your transfer. Please try again later.',
+      members_affected_24h:1188,support_tickets:37}},
+  {h:3.9,lvl:'WARN',dom:'webhook',ref:'HMON-1104',msg:'No settlement callbacks received for 7 hours (expected ~180)',
+   f:{events:['transfer.settled','transfer.returned'],received_7h:0,baseline_7h:181,reconciliation:'blocked'}},
+  {h:2.6,lvl:'ERROR',dom:'vault',ref:'HMON-1106',msg:'Certificate read returned the 2025 artifact — no 2026 version exists',
+   f:{vault_path:'alkami/partners/payrailz/mtls',versions:['2024','2025'],expected_version:'2026',
+      rotation_task:'ROT-8841',task_marked_complete:'2026-08-01',completed_by:'batch-runner'}},
+  {h:2.5,lvl:'WARN',dom:'audit',ref:'HMON-1106',msg:'Rotation task ROT-8841 signed off without a corresponding vault write',
+   f:{task:'ROT-8841',runbook_step:7,evidence_attached:false,root_cause_candidate:true}},
+  {h:0.3,lvl:'ERROR',dom:'gateway',ref:'HMON-1099',msg:'TLS handshake failed: alert 42 bad_certificate — client cert expired',
+   f:{cert_alias:'srcu-payrailz-2025',attempts_since_outage:1942,success:0}},
+  {h:0.1,lvl:'INFO',dom:'config',msg:'Incident INC-7742 opened — severity 1, payments impaired',
+   f:{incident:'INC-7742',severity:1,commander:'d.patel',status_page:'posted',bridge:'open'}}
+ ],
+ plaid:[
+  {h:1.4,lvl:'WARN',dom:'gateway',msg:'Item requires re-authentication — ITEM_LOGIN_REQUIRED',
+   f:{institution:'chase',items_affected:11,member_prompt:'sent'}},
+  {h:2.2,lvl:'INFO',dom:'orch',msg:'Transaction sync completed for 406 linked accounts',
+   f:{accounts:406,new_transactions:8812,duration_ms:14200}}
+ ],
+ zelle:[
+  {h:0.5,lvl:'ERROR',dom:'vault',ref:'HMON-1003',msg:'No credentials found at alkami/partners/zelle — integration cannot authenticate',
+   f:{vault_path:'alkami/partners/zelle',lookup:'miss',calls_blocked:'all'}},
+  {h:1.8,lvl:'ERROR',dom:'config',ref:'HMON-1002',msg:'Enablement blocked: contract MSA-2026-0088 is not countersigned',
+   f:{contract:'MSA-2026-0088',state:'draft',owner:'legal',blocked_since:'2026-07-25'}},
+  {h:3.6,lvl:'WARN',dom:'gateway',ref:'HMON-1004',msg:'Certification suite cannot start — no participant-scoped API key issued',
+   f:{required_scope:'participant:*',keys_found:0}}
+ ]
+};
+
+/* ---- filler templates per domain ---- */
+const FILLER = {
+  web:[['INFO','Widget bootstrap completed in {ms} ms',{}],['DEBUG','Feature flag snapshot resolved for member session',{}],
+       ['INFO','Engagement launcher rendered ({ms} ms)',{}],['WARN','Slow first paint on legacy browser build',{}]],
+  mobile:[['INFO','BFF aggregated partner tile payload ({ms} ms)',{}],['DEBUG','Session token refreshed ahead of expiry',{}],
+          ['WARN','Retrying partner tile fetch after transient 502',{}]],
+  orch:[['INFO','Partner request routed to {host}',{}],['DEBUG','Circuit breaker sampled: closed, 0 recent failures',{}],
+        ['INFO','Entitlement check passed for feature bundle',{}],['WARN','Retry 1 of 3 after upstream timeout',{}]],
+  gateway:[['INFO','Egress {method} {path} → {status} in {ms} ms',{}],['DEBUG','Connection pool reused (idle 2.4 s)',{}],
+           ['WARN','Upstream p95 above soft threshold',{}],['ERROR','Upstream returned 502 bad gateway',{}]],
+  identity:[['INFO','Client-credentials token issued, ttl 3600 s',{}],['DEBUG','JWKS cache hit for partner issuer',{}],
+            ['WARN','Token refreshed 12 s before expiry — clock skew suspected',{}]],
+  webhook:[['INFO','Callback accepted and enqueued ({ms} ms)',{}],['DEBUG','Signature verified against active key',{}],
+           ['WARN','Duplicate delivery suppressed (idempotency key hit)',{}]],
+  vault:[['DEBUG','Lease renewed for partner service account',{}],['INFO','Secret read: client_secret (version 4)',{}],
+         ['WARN','Secret within 14 days of rotation policy',{}]],
+  config:[['DEBUG','Resolved 14 variables (global→partner→fi→env)',{}],['INFO','Config snapshot published to 6 pods',{}],
+          ['WARN','Variable read from partner default — no FI override set',{}]],
+  audit:[['INFO','Audit record written and sealed',{}],['DEBUG','Retention policy applied: 7 years',{}]],
+  cdn:[['INFO','Widget asset served from edge ({ms} ms)',{}],['DEBUG','Cache HIT for bundle {v}',{}],
+       ['WARN','Cache MISS storm on bundle {v} after deploy',{}]]
+};
+const METHODS=['GET','POST','GET','GET','POST'];
+const PATHS={glia:['/v1/engagements','/v1/sites/site_8fa21c04/queues','/v1/operator_authentication/tokens','/v1/engagements/{id}/transcript'],
+             popio:['/api/v3/appointments','/api/v3/orgs/org_srcu_2291/queues','/api/v3/sessions/{id}','/api/v3/esign/envelopes'],
+             payrailz:['/v6/transfers','/v6/accounts/{id}','/v6/accounts/verify'],
+             plaid:['/link/token/create','/transactions/sync'],zelle:['/v5/payments','/v5/participants']};
+
+/* build the corpus */
+function buildLogs(){
+  const out = [];
+  (STORY[PARTNER]||[]).forEach(s=>{
+    out.push({t:new Date(NOW - s.h*HOUR), lvl:s.lvl, dom:s.dom, svc:DOM[s.dom].svc,
+      msg:s.msg, ref:s.ref||null, trace:'tr_'+hex(12),
+      f:Object.assign({partner:PM.slug, fi:'summitridgecu', env:ENVQ}, s.f)});
+  });
+  for(let i=0;i<260;i++){
+    const d = pick(DOMAINS);
+    const [lvl,tpl] = pick(FILLER[d.id]);
+    const ms = Math.floor(40+rnd()*rnd()*900);
+    const msg = tpl.replace('{ms}',ms).replace('{host}',PM.host)
+      .replace('{method}',pick(METHODS)).replace('{path}',pick(PATHS[PARTNER]||PATHS.glia))
+      .replace('{status}',pick([200,200,200,201,204,401,429,502])).replace('{v}','v'+(4+Math.floor(rnd()*3))+'.2.1');
+    out.push({t:new Date(NOW - rnd()*24*HOUR), lvl, dom:d.id, svc:d.svc, msg, ref:null,
+      trace:'tr_'+hex(12),
+      f:{partner:PM.slug, fi:'summitridgecu', env:ENVQ, latency_ms:ms,
+         pod:d.svc+'-'+hex(5), region:pick(['us-east-1','us-west-2']),
+         member_ref:'mbr_'+hex(6)+' (masked)'}});
+  }
+  /* an active outage produces a wall of failures, not a sprinkle */
+  if(PARTNER === 'payrailz'){
+    const burst = [
+      ['gateway','ERROR','TLS handshake failed: alert 42 bad_certificate — client cert expired','HMON-1099'],
+      ['gateway','ERROR','Half-open probe rejected — breaker remains OPEN','HMON-1101'],
+      ['orch','ERROR','Transfer {id} moved to dead-letter queue after 3 attempts','HMON-1103'],
+      ['orch','ERROR','No healthy upstream for partner payrailz','HMON-1101'],
+      ['web','ERROR','Member transfer failed — partner unavailable','HMON-1101'],
+      ['mobile','ERROR','Move Money tile returned 503 to mobile client','HMON-1101'],
+      ['webhook','WARN','Expected settlement callback window elapsed with 0 deliveries','HMON-1104']
+    ];
+    for(let i=0;i<150;i++){
+      const [dom,lvl,tpl,ref] = burst[Math.floor(rnd()*rnd()*burst.length)];
+      const h = rnd()*7.2;
+      out.push({t:new Date(NOW - h*HOUR), lvl, dom, svc:DOM[dom].svc,
+        msg:tpl.replace('{id}','trf_'+hex(8)), ref, trace:'tr_'+hex(12),
+        f:{partner:'payrailz', fi:'summitridgecu', env:ENVQ, incident:'INC-7742',
+           breaker_state:'open', cert_alias:'srcu-payrailz-2025',
+           pod:DOM[dom].svc+'-'+hex(5), region:pick(['us-east-1','us-west-2'])}});
+    }
+  }
+  return out.sort((a,b)=>b.t-a.t);
+}
+let LOGS = buildLogs();
+
+/* a few multi-domain traces for the waterfall */
+const TRACES = {};
+function seedTraces(){
+  const chains = [
+    {name:'Member opens a support engagement', spans:[
+      ['web','GET /partner/launcher',0,60],['orch','POST /engagements',55,420],
+      ['config','resolve 14 variables',60,28],['identity','POST /oauth2/token',95,186],
+      ['gateway','POST '+ (PATHS[PARTNER]||PATHS.glia)[0],290,178],['audit','write engagement record',470,22]]},
+    {name:'Partner callback rejected', spans:[
+      ['webhook','POST /partners/'+PM.slug+'/callback',0,14],['vault','read webhook_hmac',6,9],
+      ['webhook','verify signature (FAILED)',16,3],['audit','write rejection record',22,18]]}
+  ];
+  chains.forEach((c,i)=>{
+    const id = 'tr_'+hex(12);
+    TRACES[id] = c;
+    // attach the id to a matching real log line so it is reachable from the stream
+    const target = LOGS.find(l => i===0 ? l.dom==='orch' : l.dom==='webhook');
+    if(target) target.trace = id;
+  });
+}
+seedTraces();
+
+/* =========================================================================
+   State + rendering
+   ========================================================================= */
+const state = {q:'', levels:new Set(['ERROR','WARN','INFO','DEBUG']), domains:new Set(), hour:null, trace:null, issue:ISSUE, limit:100};
+
+function matches(l){
+  if(!state.levels.has(l.lvl)) return false;
+  if(state.domains.size && !state.domains.has(l.dom)) return false;
+  const hrs = +document.getElementById('range').value;
+  if(NOW - l.t > hrs*HOUR) return false;
+  if(state.hour !== null && Math.floor((NOW - l.t)/HOUR) !== state.hour) return false;
+  if(state.issue && l.ref !== state.issue) return false;
+  if(state.trace && l.trace !== state.trace) return false;
+  if(state.q){
+    const q = state.q.toLowerCase();
+    const m = q.match(/^latency>(\d+)$/);
+    if(m) return (l.f.latency_ms||0) > +m[1];
+    const s = q.match(/^status:(\d+)$/);
+    if(s) return String(l.f.status||'') === s[1];
+    const blob = (l.msg+' '+l.svc+' '+l.dom+' '+l.trace+' '+JSON.stringify(l.f)).toLowerCase();
+    if(!blob.includes(q)) return false;
+  }
+  return true;
+}
+const visible = () => LOGS.filter(matches);
+
+/* ---- facets ---- */
+function renderFacets(){
+  const base = LOGS.filter(l => (NOW - l.t) <= +document.getElementById('range').value*HOUR);
+  document.getElementById('domFacets').innerHTML = DOMAINS.map(d=>{
+    const rows = base.filter(l=>l.dom===d.id);
+    const errs = rows.filter(l=>l.lvl==='ERROR').length;
+    return '<div class="facet '+(state.domains.has(d.id)?'on':'')+'" onclick="toggleDomain(\''+d.id+'\')">'+
+      '<span class="dot" style="width:8px;height:8px;border-radius:2px;background:'+d.c+';flex:none"></span>'+
+      '<span class="nm" title="'+d.name+'">'+d.name+'</span>'+
+      (errs?'<span class="err">'+errs+'</span>':'')+
+      '<span class="ct">'+rows.length+'</span></div>';
+  }).join('');
+
+  const refs = {};
+  base.forEach(l=>{ if(l.ref) refs[l.ref] = (refs[l.ref]||0)+1; });
+  const keys = Object.keys(refs).sort();
+  document.getElementById('issueFacets').innerHTML = keys.length ? keys.map(r=>
+    '<div class="facet '+(state.issue===r?'on':'')+'" onclick="toggleIssue(\''+r+'\')">'+
+    '<span class="nm" style="font-family:var(--mono);font-size:12px">'+r+'</span>'+
+    '<span class="ct">'+refs[r]+'</span></div>').join('')
+    : '<div style="padding:4px 16px;font-size:12px;color:#94a3b8">No correlated issues</div>';
+}
+
+/* ---- severity chips ---- */
+function renderLevels(){
+  document.getElementById('lvls').innerHTML = LEVELS.map(l=>
+    '<button class="lvl '+(state.levels.has(l.id)?'':'off')+'" onclick="toggleLevel(\''+l.id+'\')">'+
+    '<span class="sw" style="background:'+l.c+'"></span>'+l.id+'</button>').join('');
+}
+
+/* ---- histogram: stacked bars, hourly buckets ---- */
+function renderChart(){
+  const hrs = +document.getElementById('range').value;
+  const buckets = Array.from({length:hrs},()=>({ERROR:0,WARN:0,INFO:0,DEBUG:0,total:0}));
+  LOGS.forEach(l=>{
+    if(!state.levels.has(l.lvl)) return;
+    if(state.domains.size && !state.domains.has(l.dom)) return;
+    if(state.issue && l.ref !== state.issue) return;
+    const h = Math.floor((NOW - l.t)/HOUR);
+    if(h < 0 || h >= hrs) return;
+    buckets[h][l.lvl]++; buckets[h].total++;
+  });
+  const bars = buckets.slice().reverse();               // oldest → newest, left → right
+  const max = Math.max(1, ...bars.map(b=>b.total));
+  const peak = bars.indexOf(bars.find(b=>b.total===max));
+
+  document.getElementById('plot').innerHTML =
+    '<div class="grid"><div style="top:0"><span>'+max+'</span></div>'+
+    '<div style="top:50%"><span>'+Math.round(max/2)+'</span></div><div style="top:100%"></div></div>' +
+    bars.map((b,i)=>{
+      const hour = hrs-1-i;
+      const segs = LEVELS.filter(l=>b[l.id]>0).map(l=>
+        '<span class="seg" style="height:'+(b[l.id]/max*100)+'%;background:'+l.c+'"></span>').join('');
+      return '<div class="bar '+(state.hour===hour?'sel':'')+'" data-h="'+hour+'" '+
+        'onclick="pickHour('+hour+')" onmousemove="barTip(event,'+hour+')" onmouseleave="hideTip()">'+
+        (i===peak && b.total ? '<span class="peak">'+b.total+'</span>' : '') + segs + '</div>';
+    }).join('');
+
+  document.getElementById('xaxis').innerHTML = bars.map((b,i)=>{
+    const hour = hrs-1-i, d = new Date(NOW - hour*HOUR);
+    const show = hrs<=6 || hour%4===0;
+    return '<span>'+(show ? String(d.getHours()).padStart(2,'0')+':00' : '')+'</span>';
+  }).join('');
+
+  const totals = {}; let all=0;
+  LEVELS.forEach(l=>{ totals[l.id] = bars.reduce((s,b)=>s+b[l.id],0); all += totals[l.id]; });
+  document.getElementById('legend').innerHTML = LEVELS.map(l=>
+    '<span class="it"><span class="sw" style="background:'+l.c+'"></span>'+l.id+' <b>'+totals[l.id].toLocaleString()+'</b></span>').join('') +
+    '<span class="note">peak '+max+' events/hour · '+fmtDay(NOW)+'</span>';
+  document.getElementById('totalPill').textContent = all.toLocaleString()+' events';
+}
+
+function barTip(e,hour){
+  const hrs = +document.getElementById('range').value;
+  const d = new Date(NOW - hour*HOUR);
+  const rows = LOGS.filter(l=>Math.floor((NOW-l.t)/HOUR)===hour &&
+    state.levels.has(l.lvl) && (!state.domains.size||state.domains.has(l.dom)) && (!state.issue||l.ref===state.issue));
+  const t = document.getElementById('tip');
+  t.innerHTML = '<div class="h">'+String(d.getHours()).padStart(2,'0')+':00 – '+String((d.getHours()+1)%24).padStart(2,'0')+':00</div>' +
+    LEVELS.map(l=>{const n=rows.filter(r=>r.lvl===l.id).length; return n?
+      '<div class="r"><span class="sw" style="background:'+l.c+'"></span><span class="lb">'+l.id+'</span><span class="n">'+n+'</span></div>':''}).join('') +
+    '<div class="r" style="margin-top:6px;border-top:1px solid #2b3f54;padding-top:5px"><span class="lb">Total</span><span class="n">'+rows.length+'</span></div>';
+  t.classList.add('show');
+  t.style.left = Math.min(e.clientX+14, innerWidth-190)+'px';
+  t.style.top  = Math.max(e.clientY-70,8)+'px';
+}
+const hideTip = () => document.getElementById('tip').classList.remove('show');
+
+/* ---- log stream ---- */
+function hl(s){
+  if(!state.q || /[:>]/.test(state.q)) return esc(s);
+  const i = s.toLowerCase().indexOf(state.q.toLowerCase());
+  if(i<0) return esc(s);
+  return esc(s.slice(0,i))+'<em>'+esc(s.slice(i,i+state.q.length))+'</em>'+esc(s.slice(i+state.q.length));
+}
+const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+function renderLogs(){
+  const rows = visible();
+  const slice = rows.slice(0, state.limit);
+  document.getElementById('logs').innerHTML = slice.length ? slice.map((l,i)=>
+    '<div class="lrow '+(l.ref?'hasref':'')+'" onclick="toggleRow('+i+')" id="r'+i+'">'+
+      '<span class="ts">'+fmt(l.t)+'</span>'+
+      '<span class="lv '+l.lvl+'">'+l.lvl+'</span>'+
+      '<span class="dm"><span class="dot" style="background:'+DOM[l.dom].c+'"></span>'+DOM[l.dom].svc+'</span>'+
+      '<span class="ms">'+hl(l.msg)+'</span>'+
+      '<span class="tr" onclick="event.stopPropagation();openTrace(\''+l.trace+'\')">'+l.trace+'</span>'+
+    '</div><div class="detail hide" id="d'+i+'">'+detailHTML(l)+'</div>').join('')
+    : '<div class="empty">No log lines match this query.<br><button class="btn sm" style="margin-top:10px" onclick="resetAll()">Clear all filters</button></div>';
+
+  document.getElementById('shown').textContent =
+    'Showing '+slice.length.toLocaleString()+' of '+rows.length.toLocaleString()+' matching lines · '+
+    LOGS.length.toLocaleString()+' total in retention window';
+  document.getElementById('moreBtn').classList.toggle('hide', slice.length >= rows.length);
+
+  const doms = state.domains.size ? state.domains.size+' of '+DOMAINS.length+' domains' : 'all '+DOMAINS.length+' domains';
+  document.getElementById('streamSub').textContent = PM.name+' · '+doms+' · newest first';
+  document.getElementById('ctx').textContent = PM.name+' · Summit Ridge CU · '+doms;
+}
+
+function detailHTML(l){
+  const f = Object.assign({timestamp:l.t.toISOString(), level:l.lvl, domain:DOM[l.dom].name,
+    service:l.svc, trace_id:l.trace, span_id:'sp_'+l.trace.slice(3,11), message:l.msg}, l.f);
+  if(l.ref) f.flagged_issue = l.ref;
+  const body = Object.entries(f).map(([k,v])=>{
+    const val = typeof v === 'number' ? '<span class="n">'+v+'</span>'
+      : typeof v === 'boolean' ? '<span class="n">'+v+'</span>'
+      : Array.isArray(v) ? '<span class="s">'+esc(JSON.stringify(v))+'</span>'
+      : '<span class="s">"'+esc(v)+'"</span>';
+    return '  <span class="k">"'+k+'"</span><span class="p">:</span> '+val;
+  }).join('<span class="p">,</span>\n');
+  return '<span class="p">{</span>\n'+body+'\n<span class="p">}</span>'+
+    '<div class="acts">'+
+      '<button onclick="event.stopPropagation();openTrace(\''+l.trace+'\')">View full trace</button>'+
+      '<button onclick="event.stopPropagation();setQuery(\''+l.svc+'\')">Filter to '+l.svc+'</button>'+
+      (l.ref?'<button onclick="event.stopPropagation();toggleIssue(\''+l.ref+'\')">Isolate '+l.ref+'</button>':'')+
+      '<button onclick="event.stopPropagation();toast(\'Copied line as NDJSON\')">Copy line</button>'+
+      '<button onclick="event.stopPropagation();toast(\'Opens Grafana with this trace pinned\')">Open in APM</button>'+
+    '</div>';
+}
+
+function toggleRow(i){
+  const d = document.getElementById('d'+i);
+  d.classList.toggle('hide');
+  document.getElementById('r'+i).classList.toggle('open');
+}
+function expandAll(){
+  const open = document.querySelector('.detail:not(.hide)');
+  document.querySelectorAll('.detail').forEach(d=>d.classList.toggle('hide', !!open));
+  document.querySelectorAll('.lrow').forEach(r=>r.classList.toggle('open', !open));
+}
+
+/* ---- trace waterfall ---- */
+function openTrace(id){
+  const t = TRACES[id];
+  if(!t){ state.trace = id; document.getElementById('traceCard').classList.add('hide');
+    toast('Filtered stream to '+id); render(); return; }
+  const total = Math.max(...t.spans.map(s=>s[2]+s[3]));
+  document.getElementById('traceId').textContent = id;
+  document.getElementById('traceTotal').textContent = t.name+' · '+total+' ms end-to-end';
+  document.getElementById('wf').innerHTML = t.spans.map(([dom,label,off,dur])=>
+    '<div class="wfrow"><span class="nm" title="'+DOM[dom].name+'">'+
+      '<span style="display:inline-block;width:7px;height:7px;border-radius:2px;background:'+DOM[dom].c+';margin-right:6px"></span>'+
+      esc(label)+'</span>'+
+      '<span class="track"><span class="span" style="left:'+(off/total*100)+'%;width:'+(dur/total*100)+'%;'+
+        'background:'+(/FAIL/i.test(label)?'var(--sev-error)':DOM[dom].c)+'"></span></span>'+
+      '<span class="ms">'+dur+' ms</span></div>').join('') +
+    '<div class="scale"><span>0 ms</span><span>'+Math.round(total/2)+' ms</span><span>'+total+' ms</span></div>';
+  document.getElementById('traceCard').classList.remove('hide');
+  document.getElementById('traceCard').scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+function clearTrace(){ state.trace=null; document.getElementById('traceCard').classList.add('hide'); render(); }
+
+/* ---- filter actions ---- */
+function toggleDomain(id){ state.domains.has(id)?state.domains.delete(id):state.domains.add(id); state.limit=100; render(); }
+function clearDomains(){ state.domains.clear(); render(); }
+function toggleLevel(id){ state.levels.has(id)?state.levels.delete(id):state.levels.add(id);
+  if(!state.levels.size) LEVELS.forEach(l=>state.levels.add(l.id)); render(); }
+function toggleIssue(r){ state.issue = state.issue===r ? null : r; state.limit=100; syncBanner(); render(); }
+function pickHour(h){ state.hour = state.hour===h ? null : h; state.limit=100; render();
+  toast(state.hour===null?'Hour filter cleared':'Filtered to the '+String(new Date(NOW-h*HOUR).getHours()).padStart(2,'0')+':00 hour'); }
+function onQuery(v){ state.q=v.trim(); state.limit=100; render(); }
+function setQuery(v){ document.getElementById('q').value=v; onQuery(v); }
+function showMore(){ state.limit += 100; renderLogs(); }
+function resetAll(){ state.q=''; document.getElementById('q').value=''; state.domains.clear(); state.hour=null;
+  state.trace=null; state.issue=null; LEVELS.forEach(l=>state.levels.add(l.id));
+  document.getElementById('traceCard').classList.add('hide'); syncBanner(); render(); }
+
+function applySaved(kind){
+  resetAll();
+  if(kind==='errors'){ state.levels=new Set(['ERROR']); document.getElementById('range').value='1'; }
+  if(kind==='auth'){ setQuery('token'); state.domains.add('identity'); }
+  if(kind==='hooks'){ setQuery('signature'); state.domains.add('webhook'); }
+  if(kind==='slow'){ setQuery('latency>500'); document.getElementById('q').value='latency>500'; }
+  render(); toast('Applied saved view');
+}
+
+function syncBanner(){
+  const b = document.getElementById('deepBanner');
+  if(state.issue){
+    const n = LOGS.filter(l=>l.ref===state.issue).length;
+    b.innerHTML = '<span>🔗</span><div>Filtered to lines correlated with flagged issue <b>'+state.issue+'</b> — '+
+      n+' event'+(n===1?'':'s')+' across '+new Set(LOGS.filter(l=>l.ref===state.issue).map(l=>l.dom)).size+
+      ' domains.</div><span class="x" onclick="toggleIssue(\''+state.issue+'\')">Clear ✕</span>';
+    b.classList.remove('hide');
+  } else b.classList.add('hide');
+}
+
+/* ---- live tail ---- */
+let tailTimer = null;
+function toggleTail(btn){
+  if(tailTimer){ clearInterval(tailTimer); tailTimer=null; btn.classList.remove('on'); btn.textContent='▶ Live tail'; return; }
+  btn.classList.add('on'); btn.textContent='⏸ Streaming';
+  tailTimer = setInterval(()=>{
+    const d = pick(DOMAINS); const [lvl,tpl] = pick(FILLER[d.id]);
+    const ms = Math.floor(40+rnd()*600);
+    LOGS.unshift({t:new Date(NOW.getTime()+ (LOGS.length%60)*1000), lvl, dom:d.id, svc:d.svc,
+      msg:tpl.replace('{ms}',ms).replace('{host}',PM.host).replace('{method}',pick(METHODS))
+        .replace('{path}',pick(PATHS[PARTNER]||PATHS.glia)).replace('{status}',200).replace('{v}','v5.2.1'),
+      ref:null, trace:'tr_'+hex(12), f:{partner:PM.slug, fi:'summitridgecu', env:ENVQ, latency_ms:ms, live:true}});
+    renderLogs();
+  }, 1800);
+}
+
+/* env switch */
+document.getElementById('env').addEventListener('click', e=>{
+  const b = e.target.closest('button'); if(!b) return;
+  [...e.currentTarget.children].forEach(x=>x.classList.remove('on'));
+  b.classList.add('on');
+  toast('Switched log source to '+b.textContent+' — re-querying last 24h');
+});
+document.querySelectorAll('#env button').forEach(b=>{ if(b.dataset.env===ENVQ){
+  document.querySelectorAll('#env button').forEach(x=>x.classList.remove('on')); b.classList.add('on'); }});
+
+let toastTimer;
+function toast(m){ const t=document.getElementById('toast'); t.textContent=m; t.classList.add('show');
+  clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove('show'),2400); }
+
+function render(){ renderFacets(); renderLevels(); renderChart(); renderLogs(); }
+
+document.getElementById('backLink').href = 'index.html?partner='+PARTNER;
+syncBanner();
+render();
+if(ISSUE) toast('Deep-linked from '+ISSUE+' — showing correlated lines only');
+</script>
+</body>
+</html>
