@@ -6,11 +6,9 @@ no backend, no dependencies, no real data.
 
 ## Live demo
 
-<https://partnership-integration-portal-demo-fc06db.gitlab.io>
+<https://alkami-hackathon-2026.github.io/team5/>
 
 The log explorer is at `/logs.html`, or reachable from any **View Logs** button.
-Pages is private to this project, so viewers need GitLab access to
-`alkami-technology/MP/mskolnick`.
 
 | Page | File | What it shows |
 |---|---|---|
@@ -58,8 +56,8 @@ expandable JSON events, a cross-domain trace waterfall, and a live-tail toggle.
 
 ## Deploying
 
-`.gitlab-ci.yml` copies both HTML files into `public/` on every push to
-`main` — no build step. Edit the files, push, done.
+GitHub Pages serves this repo's `main` branch directly from the root —
+no build step. Edit the files, push, done.
 
 ## Note
 
